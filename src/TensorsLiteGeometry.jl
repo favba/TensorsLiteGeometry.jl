@@ -22,7 +22,7 @@ export circumcenter, closest, possible_positions_periodic
     return (muladd(sin2A, a, muladd(sin2B, b, sin2C*c)))/(sin2A+sin2B+sin2C)
 end
 
-@generated function closest(p::Vec,points::Tuple{Vararg{<:Vec,N}}) where N
+@generated function closest(p::Vec,points::Tuple{Vararg{T,N}}) where {T<:Vec,N}
     quote
         $(Expr(:meta,:inline))
         p_i = points[1]
@@ -44,7 +44,7 @@ end
 
 @inline closest(points::Tuple,p::Vec) = closest(p,points)
 
-@inline possible_positions_periodic(p::Vec,periods::Tuple{Vararg{<:Vec,N}}) where N = @inline map(+,ntuple(x->p,Val{N}()), periods)
+@inline possible_positions_periodic(p::Vec,periods::Tuple{Vararg{T,N}}) where {T<:Vec,N} = @inline map(+,ntuple(x->p,Val{N}()), periods)
 
 @inline function possible_positions_periodic(p::Vec,xp::Number,yp::Number)
     xpi = xp*𝐢

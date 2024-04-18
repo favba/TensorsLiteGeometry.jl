@@ -2,6 +2,8 @@ module TensorsLiteGeometry
 using TensorsLite
 
 export circumcenter, closest, possible_positions_periodic
+export area
+export in_triangle
 
 @inline function circumcenter(a::Vec,b::Vec,c::Vec)
 
@@ -62,5 +64,29 @@ end
 end
 
 @inline closest(p::Vec,p2::Vec,xp::Number,yp::Number) = closest(p,possible_positions_periodic(p2,xp,yp))
+
+@inline area(a::Vec,b::Vec,c::Vec) = 0.5*norm((b-a)×(c-b))
+
+for N in 4:12
+    @eval function area(vars::Vararg{Vec,$N})
+        $(Expr(:meta,:inline))
+        area(ntuple(i->vars[i],$(Val(N-1)))...) + area(vars[1],vars[$(N-1)],vars[$N])
+    end
+end
+
+@inline function in_triangle(p::Vec,at::Number,a::Vec,b::Vec,c::Vec)
+
+    aa = area(p,b,c)
+    ab = area(p,c,a)
+    ac = area(p,a,b)
+
+    inside = (aa+ab+ac) ≈ at
+
+    return inside,aa,ab,ac,at
+end
+
+""" Checks if point `p` is inside the triangle given by the vertices `a`,`b`,`c`
+"""
+@inline in_triangle(p::Vec,a::Vec,b::Vec,c::Vec) = in_triangle(p,area(a,b,c),a,b,c)
 
 end

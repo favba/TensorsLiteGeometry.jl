@@ -5,6 +5,8 @@ export circumcenter, closest, possible_positions_periodic
 export area
 export in_triangle, in_polygon
 
+const VecOrTuple = Union{<:Tuple,<:AbstractVector}
+
 @inline function circumcenter(a::Vec,b::Vec,c::Vec)
 
     ab = b-a
@@ -89,7 +91,7 @@ end
 """
 @inline in_triangle(p::Vec,a::Vec,b::Vec,c::Vec) = in_triangle(p,area(a,b,c),a,b,c)
 
-function area(points::AbstractVector{T},indices::AbstractVector) where {T<:AbstractVec}
+function area(points::AbstractVector{T},indices::VecOrTuple) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
     a = zero(nonzero_eltype(T))
@@ -103,7 +105,7 @@ function area(points::AbstractVector{T},indices::AbstractVector) where {T<:Abstr
     return a
 end
 
-function area(points::AbstractVector{T},indices::AbstractVector,x_period::Number,y_period::Number) where {T<:AbstractVec}
+function area(points::AbstractVector{T},indices::VecOrTuple,x_period::Number,y_period::Number) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1,points[indices[2]],x_period,y_period)
     a = zero(nonzero_eltype(T))
@@ -117,7 +119,7 @@ function area(points::AbstractVector{T},indices::AbstractVector,x_period::Number
     return a
 end
 
-function in_polygon(p::Vec,points::AbstractVector{T},indices::AbstractVector) where {T<:AbstractVec}
+function in_polygon(p::Vec,points::AbstractVector{T},indices::VecOrTuple) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
     a = zero(nonzero_eltype(T))
@@ -133,7 +135,7 @@ function in_polygon(p::Vec,points::AbstractVector{T},indices::AbstractVector) wh
     return inside
 end
 
-function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::AbstractVector,x_period::Number,y_period::Number) where {T<:AbstractVec}
+function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::VecOrTuple,x_period::Number,y_period::Number) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1,points[indices[2]],x_period,y_period)
     a = zero(nonzero_eltype(T))

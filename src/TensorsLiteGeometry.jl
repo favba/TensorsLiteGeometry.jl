@@ -103,6 +103,20 @@ function area(points::AbstractVector{T},indices::AbstractVector) where {T<:Abstr
     return a
 end
 
+function area(points::AbstractVector{T},indices::AbstractVector,x_period::Number,y_period::Number) where {T<:AbstractVec}
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = closest(p1,points[indices[2]],x_period,y_period)
+    a = zero(nonzero_eltype(T))
+
+    @inbounds for i in Iterators.drop(indices,2)
+        p3 = closest(p1,points[i],x_period,y_period)
+        a += area(p1,p2,p3)
+        p2 = p3
+    end
+
+    return a
+end
+
 function in_polygon(p::Vec,points::AbstractVector{T},indices::AbstractVector) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
@@ -111,6 +125,22 @@ function in_polygon(p::Vec,points::AbstractVector{T},indices::AbstractVector) wh
     inside = false
     @inbounds for i in Iterators.drop(indices,2)
         p3 = points[i]
+        inside = in_triangle(p,p1,p2,p3)[1]
+        inside && break
+        p2 = p3
+    end
+
+    return inside
+end
+
+function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::AbstractVector,x_period::Number,y_period::Number) where {T<:AbstractVec}
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = closest(p1,points[indices[2]],x_period,y_period)
+    a = zero(nonzero_eltype(T))
+
+    inside = false
+    @inbounds for i in Iterators.drop(indices,2)
+        p3 = closest(p1,points[i],x_period,y_period)
         inside = in_triangle(p,p1,p2,p3)[1]
         inside && break
         p2 = p3

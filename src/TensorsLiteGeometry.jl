@@ -3,7 +3,7 @@ using TensorsLite
 
 export circumcenter, closest, possible_positions_periodic
 export area
-export in_triangle
+export in_triangle, in_polygon
 
 @inline function circumcenter(a::Vec,b::Vec,c::Vec)
 
@@ -88,5 +88,35 @@ end
 """ Checks if point `p` is inside the triangle given by the vertices `a`,`b`,`c`
 """
 @inline in_triangle(p::Vec,a::Vec,b::Vec,c::Vec) = in_triangle(p,area(a,b,c),a,b,c)
+
+function area(points::AbstractVector{T},indices::AbstractVector) where {T<:AbstractVec}
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = points[indices[2]]
+    a = zero(nonzero_eltype(T))
+
+    @inbounds for i in Iterators.drop(indices,2)
+        p3 = points[i]
+        a += area(p1,p2,p3)
+        p2 = p3
+    end
+
+    return a
+end
+
+function in_polygon(p::Vec,points::AbstractVector{T},indices::AbstractVector) where {T<:AbstractVec}
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = points[indices[2]]
+    a = zero(nonzero_eltype(T))
+
+    inside = false
+    @inbounds for i in Iterators.drop(indices,2)
+        p3 = points[i]
+        inside = in_triangle(p,p1,p2,p3)[1]
+        inside && break
+        p2 = p3
+    end
+
+    return inside
+end
 
 end

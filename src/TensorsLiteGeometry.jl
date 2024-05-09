@@ -2,8 +2,7 @@ module TensorsLiteGeometry
 using TensorsLite
 
 export circumcenter, closest, possible_positions_periodic
-export area
-export in_triangle, in_polygon
+export area, is_obtuse, in_triangle, in_polygon
 
 const VecOrTuple = Union{<:Tuple,<:AbstractVector}
 
@@ -149,6 +148,28 @@ function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::VecOrTupl
     end
 
     return inside
+end
+
+function is_obtuse(a::Vec,b::Vec,c::Vec)
+    ab = b-a
+    nab = norm(ab)
+    ac = c-a
+    nac = norm(ac)
+
+    #cos(0) <= 0
+    A = acos((ac⋅ab)/(nab*nac))
+    A >= π/2 && return true
+
+    bc = c-b
+    nbc = norm(bc)
+    C = acos((bc⋅ac)/(nbc*nac))
+
+    r = if ((C >= π/2) || (C+A <= π/2))
+        true
+    else
+        false
+    end
+    return r
 end
 
 end

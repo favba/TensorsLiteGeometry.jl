@@ -29,3 +29,25 @@ end
     @test in_polygon(d,[a,b,c,d],[1,2,3,4])
     @test !in_polygon(Vec(),[a,b,c,d],[1,2,3,4])
 end
+
+@testset "is_obtuse function" begin
+    a1 = 0.0𝐢 + 0.0𝐣 
+    b1 = 1.0𝐢 + 0.0𝐣 
+    c1 = -0.1𝐢 + 1.0𝐣 
+    @test is_obtuse(a1,b1,c1)
+
+    a2 = a1
+    b2 = b1
+    c2 = 1.1𝐢 + 1.0𝐣 
+    @test is_obtuse(a2,b2,c2)
+
+    a3 = 0.0𝐢 + 1.1𝐣 
+    b3 = b1
+    c3 = 1.0𝐢 + 1.0𝐣
+    @test is_obtuse(a3,b3,c3)
+
+    a4 = a1
+    b4 = b1
+    c4 = 0.5𝐢 + 1.0𝐣
+    @test !is_obtuse(a4,b4,c4)
+end

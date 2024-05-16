@@ -70,7 +70,7 @@ end
 @inline function closest(p::Vec,p2::Vec,xp::Number,yp::Number)
     d = min(xp,yp)/2
     norm(p2-p) < d && return p2
-    return closest(p,possible_positions_periodic(p2,xp,yp)[2:9])
+    return @noinline closest(p,possible_positions_periodic(p2,xp,yp)[2:9])
 end
 
 @inline area(a::Vec,b::Vec,c::Vec) = 0.5*norm((b-a)×(c-b))

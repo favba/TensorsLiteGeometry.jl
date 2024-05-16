@@ -64,7 +64,14 @@ end
     return (p,p_p_x,p_m_x,p_p_y,p_m_y,p_p_x_p_y,p_m_x_p_y,p_p_x_m_y,p_m_x_m_y)
 end
 
-@inline closest(p::Vec,p2::Vec,xp::Number,yp::Number) = closest(p,possible_positions_periodic(p2,xp,yp))
+#@inline closest(p::Vec,p2::Vec,xp::Number,yp::Number) = closest(p,possible_positions_periodic(p2,xp,yp))
+
+#This only work if distance between points is much smaller than periods
+@inline function closest(p::Vec,p2::Vec,xp::Number,yp::Number)
+    d = min(xp,yp)/2
+    norm(p2-p) < d && return p2
+    return closest(p,possible_positions_periodic(p2,xp,yp)[2:9])
+end
 
 @inline area(a::Vec,b::Vec,c::Vec) = 0.5*norm((b-a)×(c-b))
 

@@ -3,9 +3,15 @@ using TensorsLite
 
 export circumcenter, closest, possible_positions_periodic
 export area, is_obtuse, in_triangle, in_polygon
+export circle_edge_intersection
 
 const VecOrTuple = Union{<:Tuple,<:AbstractVector}
 
+"""
+    circumcenter(a::Vec,b::Vec,c::Vec) -> Vec
+
+Returns the circumcenter position of the triangle formed by points `a`,`b`,`c`
+"""
 @inline function circumcenter(a::Vec,b::Vec,c::Vec)
 
     ab = b-a
@@ -47,8 +53,6 @@ end
 
 @inline closest(points::Tuple,p::Vec) = closest(p,points)
 
-@inline possible_positions_periodic(p::Vec,periods::Tuple{Vararg{T,N}}) where {T<:Vec,N} = @inline map(+,ntuple(x->p,Val{N}()), periods)
-
 @inline function possible_positions_periodic(p::Vec,xp::Number,yp::Number)
     xpi = xp*𝐢
     ypj = yp*𝐣
@@ -70,7 +74,7 @@ end
 @inline function closest(p::Vec,p2::Vec,xp::Number,yp::Number)
     d = min(xp,yp)/2
     norm(p2-p) < d && return p2
-    return @noinline closest(p,possible_positions_periodic(p2,xp,yp)[2:9])
+    return closest(p,possible_positions_periodic(p2,xp,yp)[2:9])
 end
 
 @inline area(a::Vec,b::Vec,c::Vec) = 0.5*norm((b-a)×(c-b))
@@ -125,10 +129,14 @@ function area(points::AbstractVector{T},indices::VecOrTuple,x_period::Number,y_p
     return a
 end
 
+"""
+    in_polygon(point::Vec, vertices::AbstractVector{<:Vec}, indices) -> Bool
+
+Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices)`
+"""
 function in_polygon(p::Vec,points::AbstractVector{T},indices::VecOrTuple) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
-    a = zero(nonzero_eltype(T))
 
     inside = false
     @inbounds for i in Iterators.drop(indices,2)
@@ -141,10 +149,14 @@ function in_polygon(p::Vec,points::AbstractVector{T},indices::VecOrTuple) where 
     return inside
 end
 
-function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::VecOrTuple,x_period::Number,y_period::Number) where {T<:AbstractVec}
+"""
+    in_polygon_periodic(point::Vec, vertices::AbstractVector{<:Vec}, indices,x_period::Number,y_period::Number) -> Bool
+
+Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices) adjusted to the fact that some vertices positions might overflow the periodic domain.`
+"""
+function in_polygon(p::Vec,points::AbstractVector{T},indices::VecOrTuple,x_period::Number,y_period::Number) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1,points[indices[2]],x_period,y_period)
-    a = zero(nonzero_eltype(T))
 
     inside = false
     @inbounds for i in Iterators.drop(indices,2)
@@ -157,6 +169,11 @@ function in_polygon_periodic(p::Vec,points::AbstractVector{T},indices::VecOrTupl
     return inside
 end
 
+"""
+    is_obtuse(a::Vec,b::Vec,c::Vec) -> Bool
+
+Whether the triangle formed by points `a`,`b`,`c` is obtuse
+"""
 function is_obtuse(a::Vec,b::Vec,c::Vec)
     ab = b-a
     nab = norm(ab)
@@ -177,6 +194,32 @@ function is_obtuse(a::Vec,b::Vec,c::Vec)
         false
     end
     return r
+end
+
+"""
+    circle_edge_intersection(vertex_1::Vec2D, vertex_2::Vec2D, center::Vec2D, r::Number) -> Vec2D
+
+Given edge vertices `vertex_1` and `vertex_2` returns the intersection point of the edge with a circle with radius `r` centered at `center` .
+"""
+function circle_edge_intersection(p1,p2,center,radius::Number)
+    term1 = p1-p2
+    term2 = p2-center
+    a = term1⋅term1
+    b = 2*term1⋅term2
+    c = term2⋅term2 - radius*radius
+    sqrt_bterm = sqrt(b*b -4*a*c)
+
+    α1,α2 = ((-b + sqrt_bterm)/2a, (-b - sqrt_bterm)/2a )
+
+    if ((0.0 <= α1) && (α1 <= 1.0)) 
+        α = α1 
+    elseif ((0.0 <= α2) && (α2 <= 1.0)) 
+        α = α2
+    else
+        error("Circle doesn't cross edge")
+    end
+
+    return α*p1 + (1-α)*p2
 end
 
 end

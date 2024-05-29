@@ -14,9 +14,11 @@ end
 
 @testset "Area calculation" begin
     @test area(a,b,c) ≈ 2.0
+    @test area([a,b,c]) ≈ 2.0
+    @test area([a,c,b],[1,3,2]) ≈ 2.0
     @test area(a,b,c,d) ≈ 4.0
-    @test area([a,b,c],[1,2,3]) ≈ 2.0
-    @test area([a,b,c,d],[1,2,3,4]) ≈ 4.0
+    @test area([a,b,c,d]) ≈ 4.0
+    @test area([c,a,b,d],[3,1,2,4]) ≈ 4.0
     @test area([a,b + (20.0𝐢-10.0𝐣),c],[1,2,3],20.0,10.0) ≈ 2.0
     @test area([a,b,c + (20.0𝐢-10.0𝐣),d],[1,2,3,4],20.0,10.0) ≈ 4.0
 end

@@ -101,6 +101,20 @@ end
 """
 @inline in_triangle(p::Vec,a::Vec,b::Vec,c::Vec) = in_triangle(p,area(a,b,c),a,b,c)
 
+function area(points::Union{<:AbstractVector{T},NTuple{N,T}}) where {T<:AbstractVec,N}
+    @inbounds p1 = points[1]
+    @inbounds p2 = points[2]
+    a = zero(nonzero_eltype(T))
+
+    @inbounds for i in Iterators.drop(eachindex(points),2)
+        p3 = points[i]
+        a += area(p1,p2,p3)
+        p2 = p3
+    end
+
+    return a
+end
+
 function area(points::AbstractVector{T},indices::VecOrTuple) where {T<:AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]

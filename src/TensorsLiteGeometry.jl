@@ -1,9 +1,9 @@
 module TensorsLiteGeometry
-using TensorsLite
+using TensorsLite, ImmutableVectors
 
 export circumcenter, closest, possible_positions_periodic
 export area, is_obtuse, in_triangle, in_polygon
-export circle_edge_intersection
+export circle_edge_intersection, polygon_circle_intersection_area
 
 const VecOrTuple = Union{<:Tuple,<:AbstractVector}
 
@@ -211,16 +211,16 @@ function is_obtuse(a::Vec,b::Vec,c::Vec)
 end
 
 """
-    circle_edge_intersection(vertex_1::Vec2D, vertex_2::Vec2D, center::Vec2D, r::Number) -> Vec2D
+    circle_edge_intersection(vertex_1::Vec2D, vertex_2::Vec2D, center::Vec2D, r2::Number) -> Vec2D
 
-Given edge vertices `vertex_1` and `vertex_2` returns the intersection point of the edge with a circle with radius `r` centered at `center` .
+Given edge vertices `vertex_1` and `vertex_2` returns the intersection point of the edge with a circle with radius `sqrt(r2)` centered at `center` .
 """
-function circle_edge_intersection(p1,p2,center,radius::Number)
+function circle_edge_intersection(p1,p2,center,r2::Number)
     term1 = p1-p2
     term2 = p2-center
     a = term1⋅term1
     b = 2*term1⋅term2
-    c = term2⋅term2 - radius*radius
+    c = term2⋅term2 - r2
     sqrt_bterm = sqrt(b*b -4*a*c)
 
     α1,α2 = ((-b + sqrt_bterm)/2a, (-b - sqrt_bterm)/2a )
@@ -234,6 +234,57 @@ function circle_edge_intersection(p1,p2,center,radius::Number)
     end
 
     return α*p1 + (1-α)*p2
+end
+
+function is_rev_sorted(in_circle::AbstractVector)
+    r = true
+    for i in Iterators.drop(eachindex(in_circle),1)
+        r = in_circle[i-1] >= in_circle[i]
+        r || break
+    end
+    return r
+end
+
+function is_in_circle(c::Vec,r2::Number,point::Vec)
+    cp = point-c
+    return cp⋅cp <= r2
+end
+
+function polygon_circle_intersection_area(center,r2,vertices_positions::ImmutableVector{N},in_circle::ImmutableVector{N,Bool}) where N
+    l_in_c = in_circle
+    lv = vertices_positions
+
+    # Rearange terms to get all (and only) terms inside the circle placed at the beginning of the ImmutableVector
+    while !is_rev_sorted(l_in_c)
+        l_in_c = circshift(l_in_c,1) 
+        lv = circshift(lv,1)
+    end
+
+    nv_in_circle = findfirst(isequal(false),l_in_c) - 1
+
+    first_intersection = circle_edge_intersection(lv[nv_in_circle],lv[nv_in_circle+1],center,r2)
+    second_intersection = circle_edge_intersection(lv[end],lv[1],center,r2)
+
+    new_polygon = ImmutableVector{N+1}(lv[1:nv_in_circle])
+    new_polygon = push(new_polygon,first_intersection)
+    new_polygon = push(new_polygon,second_intersection)
+
+    area1 = area(new_polygon)
+
+    cp1 = first_intersection - center
+    cp2 = second_intersection - center
+
+    #Arc angle
+    θ = acos(cp1⋅cp2/(norm(cp1)*norm(cp2)))
+
+    area2 = θ*r2/2 - area(center,first_intersection,second_intersection)
+
+    return area1+area2
+end
+
+function polygon_circle_intersection_area(center,r2,vertices_positions::ImmutableVector{N}) where N
+    in_circle = map(v->(is_in_circle(center,r2,v)),vertices_positions)
+    return polygon_circle_intersection_area(center,r2,vertices_positions,in_circle)
 end
 
 end

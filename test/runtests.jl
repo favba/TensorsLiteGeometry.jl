@@ -1,4 +1,4 @@
-using TensorsLite,TensorsLiteGeometry
+using TensorsLite, TensorsLiteGeometry, ImmutableVectors
 using Test
 
 displacement = (1.3𝐢-1.3𝐣)
@@ -65,13 +65,29 @@ end
 @testset "Circle x polygon intersection" begin
    c = 1.2𝐢 - 0.4𝐣
    r = 10.0
+   r2 = r*r
 
    v1 = 5.0𝐢 + 2.0𝐣
    v2 = 20.0𝐢 + 0.0𝐣
 
    #Test if result is really in the circle
-   @test norm(circle_edge_intersection(v1,v2,c,r) - c) ≈ r
+   @test norm(circle_edge_intersection(v1,v2,c,r2) - c) ≈ r
    #Test if result is really in the line (v2-v1) by seeing if (p-v1) × (v2-v1) ≈ 0.0𝐤
-   @test isapprox(norm((circle_edge_intersection(v1,v2,c,r) - v1) × (v2-v1)), 0.0; atol=10*eps())
+   @test isapprox(norm((circle_edge_intersection(v1,v2,c,r2) - v1) × (v2-v1)), 0.0; atol=10*eps())
    
+end
+
+@testset "Circle x polygon intersection area" begin
+    disp = (10*rand())*𝐢 + (10*rand())*𝐣
+    c = Vec() + disp
+    r = 2.0
+    r2 = r*r
+    v1 = 4.0𝐢 + 4.0𝐣 + disp
+    v2 = 0.0𝐢 + 4.0𝐣 + disp
+    v3 = 0.0𝐢 + 0.0𝐣 + disp
+    v4 = 4.0𝐢 + 0.0𝐣 + disp
+    
+    polygon = ImmutableVector{7}((v1,v2,v3,v4))
+
+    @test polygon_circle_intersection_area(c,r2,polygon) ≈ π*r2/4
 end

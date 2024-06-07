@@ -262,12 +262,10 @@ function polygon_circle_intersection_area(center,r2,vertices_positions::Immutabl
 
     nv_in_circle = findfirst(isequal(false),l_in_c) - 1
 
-    first_intersection = circle_edge_intersection(lv[nv_in_circle],lv[nv_in_circle+1],center,r2)
-    second_intersection = circle_edge_intersection(lv[end],lv[1],center,r2)
+    first_intersection = @inbounds circle_edge_intersection(lv[nv_in_circle],lv[nv_in_circle+1],center,r2)
+    second_intersection = @inbounds circle_edge_intersection(lv[end],lv[1],center,r2)
 
-    new_polygon = ImmutableVector{N+1}(lv[1:nv_in_circle])
-    new_polygon = push(new_polygon,first_intersection)
-    new_polygon = push(new_polygon,second_intersection)
+    new_polygon = @inbounds push(ImmutableVector{N+1}(lv[1:nv_in_circle]),first_intersection,second_intersection)
 
     area1 = area(new_polygon)
 

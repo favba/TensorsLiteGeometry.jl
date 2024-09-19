@@ -9,7 +9,7 @@ d = 2.0𝐣 + displacement
 
 @testset "Circumcenter" begin
     #Test if vertices are really equidistant to circumcenter
-    @test norm(circumcenter(a,b,c) - a) ≈ norm(circumcenter(a,b,c) - b) && norm(circumcenter(a,b,c) - c) ≈ norm(circumcenter(a,b,c) - b)
+    @test norm(circumcenter(a,b,c) - a) ≈ norm(circumcenter(a,b,c) - b) ≈ norm(circumcenter(a,b,c) - c)
 end
 
 @testset "Area calculation" begin
@@ -90,4 +90,57 @@ end
     polygon = ImmutableVector{7}((v1,v2,v3,v4))
 
     @test polygon_circle_intersection_area(c,r2,polygon) ≈ π*r2/4
+end
+
+@testset "Spherical Geometry" begin
+    R = 2.0
+    p1 = R*normalize(Vec(1.0, 1.0, 0.0))
+    p2 = R*Vec(1.0, 0.0, 0.0)
+
+    @test spherical_distance(p1, p2) ≈ π*R/4
+    @test spherical_midpoint(p2, R*Vec(0.0, 1.0, 0.0)) ≈ p1
+
+    @test spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ Vec(π/2, π/2, π/2)
+    @test spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0))) ≈ Vec(π/4, π/2, π/2)
+
+    @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ π*R*R/2
+    @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)) ≈ π*R*R/2
+    @test spherical_area([Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)]) ≈ π*R*R/2
+    @test spherical_area([Vec(0.0, 0.0, R), R*normalize(Vec(1.0, 1.0, 0.0)), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)], [1, 3, 2, 4]) ≈ π*R*R/2
+
+    lon1 = 20*π/180
+    lon2 = 20*π/180
+    lon3 = 25*π/180
+
+    lat1 = 45*π/180
+    lat2 = 35*π/180
+    lat3 = 40*π/180
+
+    v1 = lonlat_to_position(R, lon1, lat1)
+    v2 = lonlat_to_position(R, lon2, lat2)
+    v3 = lonlat_to_position(R, lon3, lat3)
+
+    @test in_spherical_triangle(v1,v1,v2,v3)
+    @test in_spherical_triangle(v2,v1,v2,v3)
+    @test in_spherical_triangle(v3,v1,v2,v3)
+
+    v = lonlat_to_position(R, 22 * π/180, 40 * π/180)
+    @test in_spherical_triangle(v,v1,v2,v3)
+
+    v_out = lonlat_to_position(R, 26 * π/180, 40 * π/180)
+    @test !in_spherical_triangle(v_out,v1,v2,v3)
+
+    lon4 = 25*π/180
+    lat4 = 48*π/180
+    v4 = lonlat_to_position(R, lon4, lat4)
+
+    @test in_spherical_polygon(v1, [v1, v4, v2,v3], [1, 3, 4, 2])
+    @test in_spherical_polygon(v2, [v1, v4, v2,v3], [1, 3, 4, 2])
+    @test in_spherical_polygon(v3, [v1, v4, v2,v3], [1, 3, 4, 2])
+    @test in_spherical_polygon(v4, [v1, v4, v2,v3], [1, 3, 4, 2])
+
+    v = lonlat_to_position(R, 24 * π/180, 45 * π/180)
+    @test in_spherical_polygon(v, [v1, v4, v2,v3], [1, 3, 4, 2])
+    @test !in_spherical_polygon(v_out, [v1, v4, v2,v3], [1, 3, 4, 2])
+
 end

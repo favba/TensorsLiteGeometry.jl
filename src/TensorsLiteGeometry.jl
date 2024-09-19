@@ -5,6 +5,9 @@ export circumcenter, closest, possible_positions_periodic
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
 
+export spherical_distance, spherical_midpoint, spherical_angles, spherical_area, in_spherical_triangle
+export lonlat_to_position, in_spherical_polygon
+
 const VecOrTuple = Union{<:Tuple,<:AbstractVector}
 
 """
@@ -284,5 +287,7 @@ function polygon_circle_intersection_area(center,r2,vertices_positions::Immutabl
     in_circle = map(v->(is_in_circle(center,r2,v)),vertices_positions)
     return polygon_circle_intersection_area(center,r2,vertices_positions,in_circle)
 end
+
+include("spherical_geometry.jl")
 
 end

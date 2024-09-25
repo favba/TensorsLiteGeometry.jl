@@ -100,8 +100,8 @@ end
     @test spherical_distance(p1, p2) ≈ π*R/4
     @test spherical_midpoint(p2, R*Vec(0.0, 1.0, 0.0)) ≈ p1
 
-    @test spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ Vec(π/2, π/2, π/2)
-    @test spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0))) ≈ Vec(π/4, π/2, π/2)
+    @test all(spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) .≈ (π/2, π/2, π/2))
+    @test all(spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0))) .≈ (π/4, π/2, π/2))
 
     @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ π*R*R/2
     @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R*normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)) ≈ π*R*R/2

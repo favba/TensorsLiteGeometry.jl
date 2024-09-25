@@ -9,7 +9,7 @@ export spherical_distance, spherical_midpoint, spherical_angles, spherical_area,
 export lonlat_to_position, in_spherical_polygon
 export spherical_moment, spherical_constrained_centroid
 
-const VecOrTuple{T} = Union{<:(NTuple{N,T} where {N}),<:AbstractVector{T}}
+const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
 """
     circumcenter(a::Vec,b::Vec,c::Vec) -> Vec
@@ -35,7 +35,7 @@ Returns the circumcenter position of the triangle formed by points `a`,`b`,`c`
     return (muladd(sin2A, a, muladd(sin2B, b, sin2C * c))) / (sin2A + sin2B + sin2C)
 end
 
-@generated function closest(p::Vec, points::Tuple{Vararg{T,N}}) where {T<:Vec,N}
+@generated function closest(p::Vec, points::Tuple{Vararg{T, N}}) where {T <: Vec, N}
     quote
         $(Expr(:meta, :inline))
         p_i = points[1]
@@ -43,7 +43,7 @@ end
         min_p = p_i
 
         Base.Cartesian.@nexprs $(N - 1) i -> begin
-            p_i = points[i+1]
+            p_i = points[i + 1]
             norm_dist = norm(p - p_i)
             if norm_dist < min_dist
                 min_p = p_i
@@ -84,7 +84,7 @@ end
 @inline area(a::Vec, b::Vec, c::Vec) = 0.5 * norm((b - a) × (c - b))
 
 for N in 4:12
-    @eval function area(vars::Vararg{Vec,$N})
+    @eval function area(vars::Vararg{Vec, $N})
         $(Expr(:meta, :inline))
         area(ntuple(i -> vars[i], $(Val(N - 1)))...) + area(vars[1], vars[$(N - 1)], vars[$N])
     end
@@ -105,7 +105,7 @@ end
 """
 @inline in_triangle(p::Vec, a::Vec, b::Vec, c::Vec) = in_triangle(p, area(a, b, c), a, b, c)
 
-function area(points::Union{<:AbstractVector{T},NTuple{N,T}}) where {T<:AbstractVec,N}
+function area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
     @inbounds p1 = points[1]
     @inbounds p2 = points[2]
     a = zero(nonzero_eltype(T))
@@ -119,7 +119,7 @@ function area(points::Union{<:AbstractVector{T},NTuple{N,T}}) where {T<:Abstract
     return a
 end
 
-function area(points::AbstractVector{T}, indices::VecOrTuple) where {T<:AbstractVec}
+function area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
     a = zero(nonzero_eltype(T))
@@ -133,7 +133,7 @@ function area(points::AbstractVector{T}, indices::VecOrTuple) where {T<:Abstract
     return a
 end
 
-function area(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T<:AbstractVec}
+function area(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1, points[indices[2]], x_period, y_period)
     a = zero(nonzero_eltype(T))
@@ -173,7 +173,7 @@ Returns the centroid (mass center) position of the polygon formed by points geti
         p3 = points[i]
         a = area(p1, p2, p3)
         ta += a
-        w = a/ta
+        w = a / ta
         c = (1 - w) * c + w * centroid(p1, p2, p3)
         p2 = p3
     end
@@ -195,7 +195,7 @@ end
         p3 = closest(p1, points[i], x_period, y_period)
         a = area(p1, p2, p3)
         ta += a
-        w = a/ta
+        w = a / ta
         c = (1 - w) * c + w * centroid(p1, p2, p3)
         p2 = p3
     end
@@ -209,7 +209,7 @@ end
 
 Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices)`
 """
-function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T<:AbstractVec}
+function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
 
@@ -229,7 +229,7 @@ end
 
 Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices) adjusted to the fact that some vertices positions might overflow the periodic domain.`
 """
-function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T<:AbstractVec}
+function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1, points[indices[2]], x_period, y_period)
 
@@ -300,7 +300,7 @@ end
 function is_rev_sorted(in_circle::AbstractVector)
     r = true
     for i in Iterators.drop(eachindex(in_circle), 1)
-        r = in_circle[i-1] >= in_circle[i]
+        r = in_circle[i - 1] >= in_circle[i]
         r || break
     end
     return r
@@ -311,7 +311,7 @@ function is_in_circle(c::Vec, r2::Number, point::Vec)
     return cp ⋅ cp <= r2
 end
 
-function polygon_circle_intersection_area(center, r2, vertices_positions::ImmutableVector{N}, in_circle::ImmutableVector{N,Bool}) where {N}
+function polygon_circle_intersection_area(center, r2, vertices_positions::ImmutableVector{N}, in_circle::ImmutableVector{N, Bool}) where {N}
     l_in_c = in_circle
     lv = vertices_positions
 
@@ -323,7 +323,7 @@ function polygon_circle_intersection_area(center, r2, vertices_positions::Immuta
 
     nv_in_circle = findfirst(isequal(false), l_in_c) - 1
 
-    first_intersection = @inbounds circle_edge_intersection(lv[nv_in_circle], lv[nv_in_circle+1], center, r2)
+    first_intersection = @inbounds circle_edge_intersection(lv[nv_in_circle], lv[nv_in_circle + 1], center, r2)
     second_intersection = @inbounds circle_edge_intersection(lv[end], lv[1], center, r2)
 
     new_polygon = @inbounds push(ImmutableVector{N + 1}(lv[1:nv_in_circle]), first_intersection, second_intersection)

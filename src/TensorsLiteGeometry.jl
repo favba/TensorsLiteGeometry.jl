@@ -1,7 +1,7 @@
 module TensorsLiteGeometry
 using TensorsLite, ImmutableVectors, LinearAlgebra
 
-export circumcenter, closest, possible_positions_periodic
+export circumcenter, closest, possible_positions_periodic, centroid
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
 
@@ -146,6 +146,63 @@ function area(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, 
 
     return a
 end
+
+"""
+    centroid(a::Vec,b::Vec,c::Vec) -> Vec
+
+Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c`
+"""
+@inline centroid(a::Vec, b::Vec, c::Vec) = (a + b + c) / 3
+
+"""
+    centroid(points, indices) -> Vec
+
+Returns the centroid (mass center) position of the polygon formed by points getindex.((points,), indices)
+"""
+@inline function centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = points[indices[2]]
+    @inbounds p3 = points[indices[3]]
+
+    ta = area(p1, p2, p3)
+    c = centroid(p1, p2, p3)
+    p2 = p3
+
+    @inbounds for i in Iterators.drop(indices, 3)
+        p3 = points[i]
+        a = area(p1, p2, p3)
+        ta += a
+        w = a/ta
+        c = (1 - w) * c + w * centroid(p1, p2, p3)
+        p2 = p3
+    end
+
+    return c
+end
+
+@inline function centroid(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
+
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = closest(p1, points[indices[2]], x_period, y_period)
+    @inbounds p3 = closest(p1, points[indices[3]], x_period, y_period)
+
+    ta = area(p1, p2, p3)
+    c = centroid(p1, p2, p3)
+    p2 = p3
+
+    @inbounds for i in Iterators.drop(indices, 3)
+        p3 = closest(p1, points[i], x_period, y_period)
+        a = area(p1, p2, p3)
+        ta += a
+        w = a/ta
+        c = (1 - w) * c + w * centroid(p1, p2, p3)
+        p2 = p3
+    end
+
+    return c
+end
+
 
 """
     in_polygon(point::Vec, vertices::AbstractVector{<:Vec}, indices) -> Bool

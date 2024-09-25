@@ -9,7 +9,8 @@ d = 2.0𝐣 + displacement
 
 @testset "Circumcenter" begin
     #Test if vertices are really equidistant to circumcenter
-    @test norm(circumcenter(a,b,c) - a) ≈ norm(circumcenter(a,b,c) - b) ≈ norm(circumcenter(a,b,c) - c)
+    cen = circumcenter(a, b, c)
+    @test norm(cen - a) ≈ norm(cen - b) ≈ norm(cen - c)
 end
 
 @testset "Area calculation" begin
@@ -21,6 +22,11 @@ end
     @test area([c,a,b,d],[3,1,2,4]) ≈ 4.0
     @test area([a,b + (20.0𝐢-10.0𝐣),c],[1,2,3],20.0,10.0) ≈ 2.0
     @test area([a,b,c + (20.0𝐢-10.0𝐣),d],[1,2,3,4],20.0,10.0) ≈ 4.0
+end
+
+@testset "Centroid calculation" begin
+    @test centroid([a, b, c, d], 1:4) ≈ ((a + b + c + d) / 4)
+    @test centroid([a, b, c, d], 1:4, 20.0, 10.0) ≈ ((a + b + c + d) / 4)
 end
 
 @testset "in_triangle function" begin

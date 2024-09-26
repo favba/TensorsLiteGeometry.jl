@@ -11,6 +11,9 @@ export spherical_polygon_moment, spherical_polygon_centroid
 
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
+#Robust way to compute angles
+@inline angle(a, b) = atan(norm(a × b), (a ⋅ b))
+
 """
     circumcenter(a::Vec,b::Vec,c::Vec) -> Vec
 
@@ -20,12 +23,9 @@ Returns the circumcenter position of the triangle formed by points `a`,`b`,`c`
 
     ab = b - a
     ac = c - a
-    norm_ab = norm(ab)
-    norm_ac = norm(ac)
-    A = acos((ab ⋅ ac) / (norm_ab * norm_ac))
+    A = angle(ab, ac)
     bc = c - b
-    norm_bc = norm(bc)
-    B = acos(-(ab ⋅ bc) / (norm_ab * norm_bc))
+    B = angle(-ab, bc)
     C = π - A - B
 
     sin2A = sin(2 * A)
@@ -251,17 +251,14 @@ Whether the triangle formed by points `a`,`b`,`c` is obtuse
 """
 function is_obtuse(a::Vec, b::Vec, c::Vec)
     ab = b - a
-    nab = norm(ab)
     ac = c - a
-    nac = norm(ac)
 
     #cos(0) <= 0
-    A = acos((ac ⋅ ab) / (nab * nac))
+    A = angle(ac, ab)
     A >= π / 2 && return true
 
     bc = c - b
-    nbc = norm(bc)
-    C = acos((bc ⋅ ac) / (nbc * nac))
+    C = angle(bc, ac)
 
     r = if ((C >= π / 2) || (C + A <= π / 2))
         true
@@ -334,7 +331,7 @@ function polygon_circle_intersection_area(center, r2, vertices_positions::Immuta
     cp2 = second_intersection - center
 
     #Arc angle
-    θ = acos(cp1 ⋅ cp2 / (norm(cp1) * norm(cp2)))
+    θ = angle(cp1, cp2)
 
     area2 = θ * r2 / 2 - area(center, first_intersection, second_intersection)
 

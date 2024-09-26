@@ -1,4 +1,4 @@
-@inline arc_length(R::Number, a::Vec, b::Vec) = R * acos((a ⋅ b) / (R*R))
+@inline arc_length(R::Number, a::Vec, b::Vec) = R * angle(a, b)
 @inline arc_length(a::Vec, b::Vec) = arc_length(norm(a), a, b)
 
 @inline arc_midpoint(R::Number, a::Vec, b::Vec) = R * normalize((a + b) / 2)
@@ -6,16 +6,16 @@
 
 @inline function spherical_triangle_angles(a::Vec, b::Vec, c::Vec)
 
-    n_ab = normalize(a × b)
-    n_ac = normalize(a × c)
+    n_ab = a × b
+    n_ac = a × c
 
-    A = acos(n_ab ⋅ n_ac)
+    A = angle(n_ab, n_ac)
 
-    n_bc = normalize(b × c)
+    n_bc = b × c
 
-    B = acos(-(n_bc ⋅ n_ab))
+    B = angle(-n_bc, n_ab)
 
-    C = acos(n_ac ⋅ n_bc)
+    C = angle(n_ac, n_bc)
 
     return (A, B, C)
 end
@@ -110,49 +110,44 @@ Whether `point` is inside a given spherical polygon with vertices given by `geti
 @inline in_spherical_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = in_spherical_polygon(norm(points[indices[1]]), p, points, indices)
 
 @inline function spherical_polygon_moment(R::Number, a::Vec, b::Vec, c::Vec)
-    invR2 = inv(R * R)
-    ab = normalize(a × b) * acos((a ⋅ b) * invR2)
-    bc = normalize(b × c) * acos((b ⋅ c) * invR2)
-    ca = normalize(c × a) * acos((c ⋅ a) * invR2)
+    ab = normalize(a × b) * angle(a, b)
+    bc = normalize(b × c) * angle(b, c)
+    ca = normalize(c × a) * angle(c, a)
     return R * (ab + bc + ca) / 2
 end
 
 @inline function spherical_polygon_moment(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec}
 
-    invR2 = inv(R * R)
-
     @inbounds p_1 = points[1]
     @inbounds p2 = points[2]
 
-    a = normalize(p_1 × p2) * acos((p_1 ⋅ p2) * invR2)
+    a = normalize(p_1 × p2) * angle(p_1, p2)
 
     @inbounds for i in Iterators.drop(eachindex(points), 2)
         p1 = p2
         p2 = points[i]
-        a += normalize(p1 × p2) * acos((p1 ⋅ p2) * invR2)
+        a += normalize(p1 × p2) * angle(p1, p2)
     end
 
-    a += normalize(p2 × p_1) * acos((p2 ⋅ p_1) * invR2)
+    a += normalize(p2 × p_1) * angle(p2, p_1)
 
     return R * a / 2
 end
 
 @inline function spherical_polygon_moment(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
 
-    invR2 = inv(R * R)
-
     @inbounds p_1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
 
-    a = normalize(p_1 × p2) * acos((p_1 ⋅ p2) * invR2)
+    a = normalize(p_1 × p2) * angle(p_1, p2)
 
     @inbounds for i in Iterators.drop(indices, 2)
         p1 = p2
         p2 = points[i]
-        a += normalize(p1 × p2) * acos((p1 ⋅ p2) * invR2)
+        a += normalize(p1 × p2) * angle(p1, p2)
     end
 
-    a += normalize(p2 × p_1) * acos((p2 ⋅ p_1) * invR2)
+    a += normalize(p2 × p_1) * angle(p2, p_1)
 
     return R * a / 2
 end

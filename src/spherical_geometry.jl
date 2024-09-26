@@ -1,10 +1,10 @@
-@inline spherical_distance(R::Number, a::Vec, b::Vec) = R * abs(atan(norm(a × b) / (a ⋅ b)))
-@inline spherical_distance(a::Vec, b::Vec) = spherical_distance(norm(a), a, b)
+@inline arc_length(R::Number, a::Vec, b::Vec) = R * acos((a ⋅ b) / (R*R))
+@inline arc_length(a::Vec, b::Vec) = arc_length(norm(a), a, b)
 
-@inline spherical_midpoint(R::Number, a::Vec, b::Vec) = R * normalize((a + b) / 2)
-@inline spherical_midpoint(a::Vec, b::Vec) = spherical_midpoint(norm(a), a, b)
+@inline arc_midpoint(R::Number, a::Vec, b::Vec) = R * normalize((a + b) / 2)
+@inline arc_midpoint(a::Vec, b::Vec) = arc_midpoint(norm(a), a, b)
 
-@inline function spherical_angles(a::Vec, b::Vec, c::Vec)
+@inline function spherical_triangle_angles(a::Vec, b::Vec, c::Vec)
 
     n_ab = normalize(a × b)
     n_ac = normalize(a × c)
@@ -21,48 +21,48 @@
 end
 
 
-@inline spherical_area(R::Number, a::Vec, b::Vec, c::Vec) = (R * R) * (sum(spherical_angles(a, b, c)) - π)
+@inline spherical_polygon_area(R::Number, a::Vec, b::Vec, c::Vec) = (R * R) * (sum(spherical_triangle_angles(a, b, c)) - π)
 
 for N in 4:12
-    @eval function spherical_area(R::Number, vars::Vararg{Vec, $N})
+    @eval function spherical_polygon_area(R::Number, vars::Vararg{Vec, $N})
         $(Expr(:meta, :inline))
-        spherical_area(R, ntuple(i -> vars[i], $(Val(N - 1)))...) + spherical_area(R, vars[1], vars[$(N - 1)], vars[$N])
+        spherical_polygon_area(R, ntuple(i -> vars[i], $(Val(N - 1)))...) + spherical_polygon_area(R, vars[1], vars[$(N - 1)], vars[$N])
     end
 end
 
-@inline spherical_area(v::Vararg{Vec, N}) where {N} = spherical_area(norm(v[1]), v...)
+@inline spherical_polygon_area(v::Vararg{Vec, N}) where {N} = spherical_polygon_area(norm(v[1]), v...)
 
-@inline function spherical_area(R::Number, points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
+@inline function spherical_polygon_area(R::Number, points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
     @inbounds p1 = points[1]
     @inbounds p2 = points[2]
     a = zero(nonzero_eltype(T))
 
     @inbounds for i in Iterators.drop(eachindex(points), 2)
         p3 = points[i]
-        a += spherical_area(R, p1, p2, p3)
+        a += spherical_polygon_area(R, p1, p2, p3)
         p2 = p3
     end
 
     return a
 end
 
-@inline spherical_area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N} = spherical_area(norm(@inbounds(points[1])), points)
+@inline spherical_polygon_area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N} = spherical_polygon_area(norm(@inbounds(points[1])), points)
 
-@inline function spherical_area(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+@inline function spherical_polygon_area(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
     a = zero(nonzero_eltype(T))
 
     @inbounds for i in Iterators.drop(indices, 2)
         p3 = points[i]
-        a += spherical_area(R, p1, p2, p3)
+        a += spherical_polygon_area(R, p1, p2, p3)
         p2 = p3
     end
 
     return a
 end
 
-@inline spherical_area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_area(norm(@inbounds(points[indices[1]])), points, indices)
+@inline spherical_polygon_area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_polygon_area(norm(@inbounds(points[indices[1]])), points, indices)
 
 @inline function lonlat_to_position(R::Number, lon::Number, lat::Number)
     sinlon = sin(lon)
@@ -109,7 +109,7 @@ Whether `point` is inside a given spherical polygon with vertices given by `geti
 """
 @inline in_spherical_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = in_spherical_polygon(norm(points[indices[1]]), p, points, indices)
 
-@inline function spherical_moment(R::Number, a::Vec, b::Vec, c::Vec)
+@inline function spherical_polygon_moment(R::Number, a::Vec, b::Vec, c::Vec)
     invR2 = inv(R * R)
     ab = normalize(a × b) * acos((a ⋅ b) * invR2)
     bc = normalize(b × c) * acos((b ⋅ c) * invR2)
@@ -117,7 +117,7 @@ Whether `point` is inside a given spherical polygon with vertices given by `geti
     return R * (ab + bc + ca) / 2
 end
 
-@inline function spherical_moment(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec}
+@inline function spherical_polygon_moment(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec}
 
     invR2 = inv(R * R)
 
@@ -137,7 +137,7 @@ end
     return R * a / 2
 end
 
-@inline function spherical_moment(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+@inline function spherical_polygon_moment(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
 
     invR2 = inv(R * R)
 
@@ -157,11 +157,11 @@ end
     return R * a / 2
 end
 
-@inline spherical_constrained_centroid(R::Number, a::Vec, b::Vec, c::Vec) = R * normalize(spherical_moment(R, a, b, c))
-@inline spherical_constrained_centroid(a::Vec, b::Vec, c::Vec) = spherical_constrained_centroid(norm(a), b, c)
+@inline spherical_polygon_centroid(R::Number, a::Vec, b::Vec, c::Vec) = R * normalize(spherical_polygon_moment(R, a, b, c))
+@inline spherical_polygon_centroid(a::Vec, b::Vec, c::Vec) = spherical_polygon_centroid(norm(a), b, c)
 
-@inline spherical_constrained_centroid(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec} = R * normalize(spherical_moment(R, points))
-@inline spherical_constrained_centroid(points::VecOrTuple{T}) where {T <: AbstractVec} = spherical_constrained_centroid(norm(points[1]), points)
+@inline spherical_polygon_centroid(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec} = R * normalize(spherical_polygon_moment(R, points))
+@inline spherical_polygon_centroid(points::VecOrTuple{T}) where {T <: AbstractVec} = spherical_polygon_centroid(norm(points[1]), points)
 
-@inline spherical_constrained_centroid(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = R * normalize(spherical_moment(R, points, indices))
-@inline spherical_constrained_centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_constrained_centroid(norm(points[indices[1]]), points, indices)
+@inline spherical_polygon_centroid(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = R * normalize(spherical_polygon_moment(R, points, indices))
+@inline spherical_polygon_centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_polygon_centroid(norm(points[indices[1]]), points, indices)

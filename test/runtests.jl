@@ -103,16 +103,16 @@ end
     p1 = R * normalize(Vec(1.0, 1.0, 0.0))
     p2 = R * Vec(1.0, 0.0, 0.0)
 
-    @test spherical_distance(p1, p2) ≈ π * R / 4
-    @test spherical_midpoint(p2, R * Vec(0.0, 1.0, 0.0)) ≈ p1
+    @test arc_length(p1, p2) ≈ π * R / 4
+    @test arc_midpoint(p2, R * Vec(0.0, 1.0, 0.0)) ≈ p1
 
-    @test all(spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) .≈ (π / 2, π / 2, π / 2))
-    @test all(spherical_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0))) .≈ (π / 4, π / 2, π / 2))
+    @test all(spherical_triangle_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) .≈ (π / 2, π / 2, π / 2))
+    @test all(spherical_triangle_angles(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0))) .≈ (π / 4, π / 2, π / 2))
 
-    @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ π * R * R / 2
-    @test spherical_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)) ≈ π * R * R / 2
-    @test spherical_area([Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)]) ≈ π * R * R / 2
-    @test spherical_area([Vec(0.0, 0.0, R), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)], [1, 3, 2, 4]) ≈ π * R * R / 2
+    @test spherical_polygon_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)) ≈ π * R * R / 2
+    @test spherical_polygon_area(Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)) ≈ π * R * R / 2
+    @test spherical_polygon_area([Vec(0.0, 0.0, R), Vec(R, 0.0, 0.0), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(0.0, R, 0.0)]) ≈ π * R * R / 2
+    @test spherical_polygon_area([Vec(0.0, 0.0, R), R * normalize(Vec(1.0, 1.0, 0.0)), Vec(R, 0.0, 0.0), Vec(0.0, R, 0.0)], [1, 3, 2, 4]) ≈ π * R * R / 2
 
     lon1 = 20 * π / 180
     lon2 = 20 * π / 180

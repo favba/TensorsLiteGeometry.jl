@@ -5,9 +5,9 @@ export circumcenter, closest, possible_positions_periodic, centroid
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
 
-export spherical_distance, spherical_midpoint, spherical_angles, spherical_area, in_spherical_triangle
+export arc_length, arc_midpoint, spherical_triangle_angles, spherical_polygon_area, in_spherical_triangle
 export lonlat_to_position, in_spherical_polygon
-export spherical_moment, spherical_constrained_centroid
+export spherical_polygon_moment, spherical_polygon_centroid
 
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 

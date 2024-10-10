@@ -25,8 +25,12 @@ end
 end
 
 @testset "Centroid calculation" begin
+    @test centroid([a, b, c, d]) ≈ ((a + b + c + d) / 4)
     @test centroid([a, b, c, d], 1:4) ≈ ((a + b + c + d) / 4)
     @test centroid([a, b, c, d], 1:4, 20.0, 10.0) ≈ ((a + b + c + d) / 4)
+    @test mass_centroid(x -> true, a, b, c) ≈ ((a + b + c) / 3)
+    @test mass_centroid(x -> true, [a, b, c, d]) ≈ ((a + b + c + d) / 4)
+    @test mass_centroid(x -> true, [a, b, c, d], 1:4) ≈ ((a + b + c + d) / 4)
 end
 
 @testset "in_triangle function" begin

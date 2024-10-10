@@ -1,7 +1,7 @@
 module TensorsLiteGeometry
 using TensorsLite, ImmutableVectors, LinearAlgebra
 
-export circumcenter, closest, possible_positions_periodic, centroid
+export circumcenter, closest, possible_positions_periodic, centroid, mass_centroid
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
 
@@ -155,9 +155,89 @@ Returns the centroid (mass center) position of the triangle formed by points `a`
 @inline centroid(a::Vec, b::Vec, c::Vec) = (a + b + c) / 3
 
 """
+    mass_centroid(ρ::Function, a::Vec,b::Vec,c::Vec) -> Vec
+
+Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c` and density funciton `ρ(𝐱)`
+The result is an approximation due to the assumption that `ρ` is linear inside the triangle.
+"""
+@inline function mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function}
+    ρa = ρ(a)
+    ρb = ρ(b)
+    ρc = ρ(c)
+    tρ = ρa + ρb + ρc
+    return (ρa / tρ) * a + (ρb / tρ) * b + (ρc / tρ) * c
+end
+
+"""
+    centroid(points) -> Vec
+
+Returns the centroid (mass center) position of the polygon formed by `points`.
+"""
+@inline function centroid(points::AbstractVector{T}) where {T <: AbstractVec}
+
+    @inbounds p1 = points[1]
+    @inbounds p2 = points[2]
+    @inbounds p3 = points[3]
+
+    ta = area(p1, p2, p3)
+    c = centroid(p1, p2, p3)
+    p2 = p3
+
+    @inbounds for i in Iterators.drop(eachindex(points), 3)
+        p3 = points[i]
+        a = area(p1, p2, p3)
+        ta += a
+        w = a / ta
+        c = (1 - w) * c + w * centroid(p1, p2, p3)
+        p2 = p3
+    end
+
+    return c
+end
+
+"""
+    mass_centroid(ρ, points) -> Vec
+
+Returns the centroid (mass center) position of the polygon formed by `points` with density function `ρ(𝐱)`.
+The result is an approximation due to the assumption that `ρ` is linear inside each triangle that forms the polygon.
+"""
+@inline function mass_centroid(ρ::F, points::AbstractVector{T}) where {F <: Function, T <: AbstractVec}
+
+    @inbounds p1 = points[1]
+    @inbounds p2 = points[2]
+    @inbounds p3 = points[3]
+
+    rp1 = ρ(p1)
+    rp2 = ρ(p2)
+    rp3 = ρ(p2)
+    tr = rp1 + rp2 + rp3
+
+    tmass = (tr / 3) * area(p1, p2, p3)
+    c = (rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3
+
+    p2 = p3
+    rp2 = rp3
+
+    @inbounds for i in Iterators.drop(eachindex(points), 3)
+        p3 = points[i]
+        rp3 = ρ(p3)
+        tr = rp1 + rp2 + rp3
+        mass = (tr / 3) * area(p1, p2, p3)
+        tmass += mass
+        w = mass / tmass
+        c = (1 - w) * c + w * ((rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3)
+        p2 = p3
+        rp2 = rp3
+    end
+
+    return c
+end
+
+
+"""
     centroid(points, indices) -> Vec
 
-Returns the centroid (mass center) position of the polygon formed by points getindex.((points,), indices)
+Returns the centroid (mass center) position of the polygon formed by points `getindex.((points,), indices)`
 """
 @inline function centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
 
@@ -176,6 +256,44 @@ Returns the centroid (mass center) position of the polygon formed by points geti
         w = a / ta
         c = (1 - w) * c + w * centroid(p1, p2, p3)
         p2 = p3
+    end
+
+    return c
+end
+
+"""
+    mass_centroid(ρ, points, indices) -> Vec
+
+Returns the centroid (mass center) position of the polygon formed by points `getindex.((points,), indices)` with density funciton `ρ(𝐱)`.
+The result is an approximation due to the assumption that `ρ` is linear inside each triangle that forms the polygon.
+"""
+@inline function mass_centroid(ρ::F, points::AbstractVector{T}, indices::VecOrTuple) where {F <: Function, T <: AbstractVec}
+
+    @inbounds p1 = points[indices[1]]
+    @inbounds p2 = points[indices[2]]
+    @inbounds p3 = points[indices[3]]
+
+    rp1 = ρ(p1)
+    rp2 = ρ(p2)
+    rp3 = ρ(p2)
+    tr = rp1 + rp2 + rp3
+
+    tmass = (tr / 3) * area(p1, p2, p3)
+    c = (rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3
+
+    p2 = p3
+    rp2 = rp3
+
+    @inbounds for i in Iterators.drop(indices, 3)
+        p3 = points[i]
+        rp3 = ρ(p3)
+        tr = rp1 + rp2 + rp3
+        mass = (tr / 3) * area(p1, p2, p3)
+        tmass += mass
+        w = mass / tmass
+        c = (1 - w) * c + w * ((rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3)
+        p2 = p3
+        rp2 = rp3
     end
 
     return c

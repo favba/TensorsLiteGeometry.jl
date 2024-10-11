@@ -9,6 +9,8 @@ export arc_length, arc_midpoint, spherical_triangle_angles, spherical_polygon_ar
 export lonlat_to_position, in_spherical_polygon
 export spherical_polygon_moment, spherical_polygon_centroid
 
+export periodic_to_base_point, isapprox_periodic
+
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
 #Robust way to compute angles
@@ -460,6 +462,35 @@ function polygon_circle_intersection_area(center, r2, vertices_positions::Immuta
     in_circle = map(v -> (is_in_circle(center, r2, v)), vertices_positions)
     return polygon_circle_intersection_area(center, r2, vertices_positions, in_circle)
 end
+
+"""
+    periodic_to_base_point(p::Vec2Dxy, lx, ly) -> base_point::Vec2Dxy
+
+Given a point `p` returns the equivalent point that lies in `[0, lx] × [0, ly]` (assuming the domain is bi-periodic with periods `lx` and `ly`).
+"""
+function periodic_to_base_point(p::Vec2Dxy, lx::Number, ly::Number)
+    r = p
+    while r.x >= lx
+        r -= lx*𝐢
+    end
+    while r.x < 0.0
+        r += lx*𝐢
+    end
+    while r.y >= ly
+        r -= ly*𝐣
+    end
+    while r.y < 0.0
+        r += ly*𝐣
+    end
+    return r
+end
+
+"""
+    isapprox_periodic(a::Vec2Dxy, b::Vec2Dxy, lx, ly) -> Bool
+
+Check if `a` and `b` represent the same base point (to [`isapprox`](@ref) tolerance) in a periodic box with `lx` and `ly` periods.
+"""
+isapprox_periodic(p1::Vec2Dxy, p2::Vec2Dxy, lx::Number, ly::Number) = periodic_to_base_point(p1, lx, ly) ≈ periodic_to_base_point(p2, lx, ly)
 
 include("spherical_geometry.jl")
 

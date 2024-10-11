@@ -7,6 +7,16 @@ b = 2.0𝐢 + displacement
 c = 2.0𝐢 + 2.0𝐣 + displacement
 d = 2.0𝐣 + displacement
 
+@testset "Helper Functions" begin
+    @test periodic_to_base_point(1.5𝐢+ 1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.2𝐣
+    @test periodic_to_base_point(-1.5𝐢+ 1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.2𝐣
+    @test periodic_to_base_point(-1.5𝐢+ -1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.8𝐣
+    @test periodic_to_base_point(1.5𝐢+ -1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.8𝐣
+    @test periodic_to_base_point(5*(1.5𝐢+ -1.5𝐣), 1.0, 1.0) ≈ 0.5𝐢 + 0.5𝐣
+
+    @test isapprox_periodic(1.2𝐢 + 1.3𝐣, 21.2𝐢 + 2.3𝐣, 1.0, 1.0)
+end
+
 @testset "Circumcenter" begin
     #Test if vertices are really equidistant to circumcenter
     cen = circumcenter(a, b, c)

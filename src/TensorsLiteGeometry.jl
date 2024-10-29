@@ -10,6 +10,7 @@ export lonlat_to_position, in_spherical_polygon
 export spherical_polygon_moment, spherical_polygon_centroid
 
 export periodic_to_base_point, isapprox_periodic
+export eastward_vector, northward_vector
 
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
@@ -466,7 +467,7 @@ end
 """
     periodic_to_base_point(p::Vec2Dxy, lx, ly) -> base_point::Vec2Dxy
 
-Given a point `p` returns the equivalent point that lies in `[0, lx] × [0, ly]` (assuming the domain is bi-periodic with periods `lx` and `ly`).
+Given a point `p` returns the equivalent point that lies in `[0, lx) × [0, ly)` (assuming the domain is bi-periodic with periods `lx` and `ly`).
 """
 function periodic_to_base_point(p::Vec2Dxy, lx::Number, ly::Number)
     r = p

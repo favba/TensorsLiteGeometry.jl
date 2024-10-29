@@ -163,4 +163,19 @@ end
     @test in_spherical_polygon(v, [v1, v4, v2, v3], [1, 3, 4, 2])
     @test !in_spherical_polygon(v_out, [v1, v4, v2, v3], [1, 3, 4, 2])
 
+    @test eastward_vector(Vec(1,0,0)) ≈ 𝐣
+    @test eastward_vector(Vec(0,1,0)) ≈ -𝐢
+    @test eastward_vector(Vec(-1,0,0)) ≈ -𝐣
+    @test eastward_vector(Vec(0,-1,0)) ≈ 𝐢
+    @test eastward_vector(Vec(1,1,0)) ≈ normalize(𝐣 - 𝐢)
+    @test eastward_vector(Vec(-1,-1,0)) ≈ normalize(𝐢 - 𝐣)
+
+    @test northward_vector(Vec(1,0,0)) ≈ 𝐤
+    @test northward_vector(Vec(1,1,0)) ≈ 𝐤
+    @test northward_vector(Vec(1,-1,0)) ≈ 𝐤
+    @test northward_vector(Vec(1,0,-1)) ≈ normalize(𝐢 + 𝐤)
+    @test northward_vector(Vec(1,0,1)) ≈ normalize(-𝐢 + 𝐤)
+    p = Vec(rand(), rand(), rand())
+    @test eastward_vector(p) × northward_vector(p) ≈ normalize(p)
+
 end

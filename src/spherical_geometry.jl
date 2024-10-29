@@ -160,3 +160,32 @@ end
 
 @inline spherical_polygon_centroid(R::Number, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = R * normalize(spherical_polygon_moment(R, points, indices))
 @inline spherical_polygon_centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_polygon_centroid(norm(points[indices[1]]), points, indices)
+
+"""
+    eastward_vector(position::Vec) -> east_unit_vector::Vec2D
+
+Return the eastward unit vector to the `position` vector.
+"""
+@inline function eastward_vector(p::Vec3D)
+    ϕ = atan(p.y, p.x)
+    return cos(ϕ) * 𝐣 - sin(ϕ) * 𝐢
+end
+
+"""
+    northward_vector(position::Vec) -> northward_unit_vector::Vec3D
+
+Return the northward unit vector to the `position` vector.
+"""
+@inline function northward_vector(p::Vec3D)
+    x = p.x
+    y = p.y
+    z = p.z
+    ϕ = atan(y, x)
+    θ = atan(sqrt(x*x + y*y), z)
+    sinϕ = sin(ϕ)
+    cosϕ = cos(ϕ)
+    sinθ = sin(θ)
+    cosθ = cos(θ)
+    return sinθ*𝐤 - (cosϕ*cosθ)*𝐢 - (sinϕ*cosθ)*𝐣
+end
+

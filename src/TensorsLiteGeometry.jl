@@ -491,7 +491,12 @@ end
 
 Check if `a` and `b` represent the same base point (to [`isapprox`](@ref) tolerance) in a periodic box with `lx` and `ly` periods.
 """
-isapprox_periodic(p1::Vec2Dxy, p2::Vec2Dxy, lx::Number, ly::Number) = periodic_to_base_point(p1, lx, ly) ≈ periodic_to_base_point(p2, lx, ly)
+function isapprox_periodic(p1::Vec2Dxy{T}, p2::Vec2Dxy, lx::Number, ly::Number; atol = 0, rtol = sqrt(eps(T))) where {T} 
+    bp1 = periodic_to_base_point(p1, lx, ly)
+    bp2 = periodic_to_base_point(p2, lx, ly)
+    # using `closest` because we can't compare bp1 and bp2 directly when they fall "exactly" at the periodic boxes edges
+    return isapprox(bp1, closest(bp1, bp2, lx, ly), atol = atol, rtol = rtol)
+end
 
 include("spherical_geometry.jl")
 

@@ -14,8 +14,17 @@ export eastward_vector, northward_vector
 
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
+@inline precise_norm(a) = norm(a)
+
+@inline precise_norm(a::Vec2Dxy) = hypot(a.x, a.y)
+@inline precise_norm(a::Vec2Dxz) = hypot(a.x, a.z)
+@inline precise_norm(a::Vec2Dyz) = hypot(a.y, a.z)
+
+@inline precise_norm(a::Vec3D) = hypot(a.x, a.y, a.z)
+
 #Robust way to compute angles
-@inline angle(a, b) = atan(norm(a × b), (a ⋅ b))
+#atan(norm(a × b), (a ⋅ b))
+@inline angle(a, b) = atan(precise_norm(a × b), (a ⋅ b))
 
 """
     circumcenter(a::Vec,b::Vec,c::Vec) -> Vec

@@ -181,7 +181,7 @@ Return the northward unit vector to the `position` vector.
     y = p.y
     z = p.z
     ϕ = atan(y, x)
-    θ = atan(sqrt(x*x + y*y), z)
+    θ = atan(hypot(x, y), z)
     sinϕ = sin(ϕ)
     cosϕ = cos(ϕ)
     sinθ = sin(θ)

@@ -8,6 +8,8 @@ c = 2.0𝐢 + 2.0𝐣 + displacement
 d = 2.0𝐣 + displacement
 
 @testset "Helper Functions" begin
+    @test closest(0.9𝐢 + 0.9𝐣, 0.1𝐢 + 0.1𝐣, 1.0, 1.0) ≈ 1.1𝐢 + 1.1𝐣
+
     @test periodic_to_base_point(1.5𝐢+ 1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.2𝐣
     @test periodic_to_base_point(-1.5𝐢+ 1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.2𝐣
     @test periodic_to_base_point(-1.5𝐢+ -1.2𝐣, 1.0, 1.0) ≈ 0.5𝐢 + 0.8𝐣

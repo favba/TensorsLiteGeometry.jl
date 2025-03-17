@@ -87,10 +87,39 @@ end
 #@inline closest(p::Vec,p2::Vec,xp::Number,yp::Number) = closest(p,possible_positions_periodic(p2,xp,yp))
 
 #This only work if distance between points is much smaller than periods
-@inline function closest(p::Vec, p2::Vec, xp::Number, yp::Number)
-    d = min(xp, yp) / 2
-    norm(p2 - p) < d && return p2
-    return closest(p, possible_positions_periodic(p2, xp, yp)[2:9])
+@inline function closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number)
+    #d = min(xp, yp) / 2
+    #norm(p2 - p) < d && return p2
+    #return closest(p, possible_positions_periodic(p2, xp, yp)[2:9])
+    px = p.x
+    py = p.y
+    p2x = p2.x
+    p2y = p2.y
+    dx = p2x - px
+    dy = p2y - py
+
+    adx = abs(dx)
+    ady = abs(dy)
+
+    if ((adx < 0.5*xp) && (ady < 0.5*yp)) 
+        return p2
+    end
+
+    p2xp = p2x + xp
+    pfx = if (abs(p2xp - px) < adx)
+        p2xp 
+    else 
+        p2x - xp
+    end
+
+    p2yp = p2y + yp
+    pfy = if (abs(p2yp - py)) < ady
+        p2yp
+    else
+        p2y - yp
+    end
+
+    return Vec(x=pfx, y=pfy)
 end
 
 @inline area(a::Vec, b::Vec, c::Vec) = 0.5 * norm((b - a) × (c - b))

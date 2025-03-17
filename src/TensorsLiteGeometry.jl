@@ -101,22 +101,26 @@ end
     adx = abs(dx)
     ady = abs(dy)
 
-    if ((adx < 0.5*xp) && (ady < 0.5*yp)) 
-        return p2
-    end
-
-    p2xp = p2x + xp
-    pfx = if (abs(p2xp - px) < adx)
-        p2xp 
-    else 
-        p2x - xp
-    end
-
-    p2yp = p2y + yp
-    pfy = if (abs(p2yp - py)) < ady
-        p2yp
+    pfx = if (adx < 0.5*xp)
+        p2x
     else
-        p2y - yp
+        p2xp = p2x + xp
+        if (abs(p2xp - px) < adx)
+            p2xp 
+        else 
+            p2x - xp
+        end
+    end
+
+    pfy = if (ady < 0.5*yp)
+        p2y
+    else
+        p2yp = p2y + yp
+        if (abs(p2yp - py) < ady)
+            p2yp 
+        else 
+            p2y - yp
+        end
     end
 
     return Vec(x=pfx, y=pfy)

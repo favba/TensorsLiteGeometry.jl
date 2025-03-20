@@ -203,14 +203,14 @@ Returns the centroid (mass center) position of the triangle formed by points `a`
     mass_centroid(ρ::Function, a::Vec,b::Vec,c::Vec) -> Vec
 
 Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c` and density funciton `ρ(𝐱)`
-The result is an approximation due to the assumption that `ρ` is linear inside the triangle.
+The result is an approximation.
 """
 @inline function mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function}
     ρa = ρ(a)
     ρb = ρ(b)
     ρc = ρ(c)
-    tρ = ρa + ρb + ρc
-    return (ρa / tρ) * a + (ρb / tρ) * b + (ρc / tρ) * c
+    ρm = (ρa + ρb + ρc) / 3
+    return ((1 + ((2ρa) / ρm)) * a + (1 + ((2ρb) / ρm)) * b + (1 + ((2ρc) / ρm)) * c) / 9
 end
 
 """
@@ -255,10 +255,10 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
     rp1 = ρ(p1)
     rp2 = ρ(p2)
     rp3 = ρ(p2)
-    tr = rp1 + rp2 + rp3
+    rm = (rp1 + rp2 + rp3) / 3
 
-    tmass = (tr / 3) * area(p1, p2, p3)
-    c = (rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3
+    tmass = rm * area(p1, p2, p3)
+    c = ((1 + ((2rp1) / rm)) * p1 + (1 + ((2rp2) / rm)) * p2 + (1 + ((2rp3) / rm)) * p3) / 9
 
     p2 = p3
     rp2 = rp3
@@ -266,11 +266,11 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
     @inbounds for i in Iterators.drop(eachindex(points), 3)
         p3 = points[i]
         rp3 = ρ(p3)
-        tr = rp1 + rp2 + rp3
-        mass = (tr / 3) * area(p1, p2, p3)
+        rm = (rp1 + rp2 + rp3) / 3
+        mass = rm * area(p1, p2, p3)
         tmass += mass
         w = mass / tmass
-        c = (1 - w) * c + w * ((rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3)
+        c = (1 - w) * c + w * (((1 + ((2rp1) / rm)) * p1 + (1 + ((2rp2) / rm)) * p2 + (1 + ((2rp3) / rm)) * p3) / 9)
         p2 = p3
         rp2 = rp3
     end

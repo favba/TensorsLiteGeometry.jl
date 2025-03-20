@@ -29,9 +29,9 @@ d = 2.0𝐣 + displacement
     #edge case when point is at the boundary
     #periodic_to_base_point(a, 1, 1) will return 0𝐢+0𝐣 while
     #periodic_to_base_point(b, 1, 1) will return 𝐢+𝐣.
-    a = 0.0𝐢 + 0.0𝐣
-    b = -1e-19𝐢 + -1e-19𝐣
-    @test isapprox_periodic(a, b, 1.0, 1.0, atol = 2e-16)
+    let a = 0.0𝐢 + 0.0𝐣 , b = -1e-19𝐢 + -1e-19𝐣
+        @test isapprox_periodic(a, b, 1.0, 1.0, atol = 2e-16)
+    end
 end
 
 @testset "Circumcenter" begin

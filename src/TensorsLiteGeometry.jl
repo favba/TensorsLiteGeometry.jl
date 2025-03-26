@@ -84,47 +84,67 @@ end
     return (p, p_p_x, p_m_x, p_p_y, p_m_y, p_p_x_p_y, p_m_x_p_y, p_p_x_m_y, p_m_x_m_y)
 end
 
-#@inline closest(p::Vec,p2::Vec,xp::Number,yp::Number) = closest(p,possible_positions_periodic(p2,xp,yp))
-
 #This only work if distance between points is much smaller than periods
-@inline function closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number)
-    #d = min(xp, yp) / 2
-    #norm(p2 - p) < d && return p2
-    #return closest(p, possible_positions_periodic(p2, xp, yp)[2:9])
-    px = p.x
-    py = p.y
-    p2x = p2.x
-    p2y = p2.y
-    dx = p2x - px
-    dy = p2y - py
+#@inline function closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number)
+#    #d = min(xp, yp) / 2
+#    #norm(p2 - p) < d && return p2
+#    #return closest(p, possible_positions_periodic(p2, xp, yp)[2:9])
+#    px = p.x
+#    py = p.y
+#    p2x = p2.x
+#    p2y = p2.y
+#    dx = p2x - px
+#    dy = p2y - py
+#
+#    adx = abs(dx)
+#    ady = abs(dy)
+#
+#    pfx = if (adx < 0.5*xp)
+#        p2x
+#    else
+#        p2xp = p2x + xp
+#        if (abs(p2xp - px) < adx)
+#            p2xp 
+#        else 
+#            p2x - xp
+#        end
+#    end
+#
+#    pfy = if (ady < 0.5*yp)
+#        p2y
+#    else
+#        p2yp = p2y + yp
+#        if (abs(p2yp - py) < ady)
+#            p2yp 
+#        else 
+#            p2y - yp
+#        end
+#    end
+#
+#    return Vec(x=pfx, y=pfy)
+#end
 
-    adx = abs(dx)
-    ady = abs(dy)
+@inline function closest(base_val::Real, val::T, period=T(360)) where {T<:Real}
+    vals1 = val - period
+    vals2 = val
+    vals3 = val + period
 
-    pfx = if (adx < 0.5*xp)
-        p2x
-    else
-        p2xp = p2x + xp
-        if (abs(p2xp - px) < adx)
-            p2xp 
-        else 
-            p2x - xp
-        end
+    min_diff = abs(vals1 - base_val)
+    result = vals1
+
+    diff = abs(vals2 - base_val)
+    if diff < min_diff
+        result = vals2
+        min_diff = diff
     end
 
-    pfy = if (ady < 0.5*yp)
-        p2y
-    else
-        p2yp = p2y + yp
-        if (abs(p2yp - py) < ady)
-            p2yp 
-        else 
-            p2y - yp
-        end
+    if abs(vals3 - base_val) < min_diff
+        result = vals3
     end
-
-    return Vec(x=pfx, y=pfy)
+    return result
 end
+
+@inline closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number) = Vec(x = closest(p.x, p2.x, xp), y = closest(p.y, p2.y, yp))
 
 @inline area(a::Vec, b::Vec, c::Vec) = 0.5 * norm((b - a) × (c - b))
 

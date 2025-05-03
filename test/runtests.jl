@@ -157,6 +157,10 @@ end
     v2 = lonlat_to_position(R, lon2, lat2)
     v3 = lonlat_to_position(R, lon3, lat3)
 
+    @test all(position_to_lonlat(v1) .≈ (lon1, lat1))
+    @test all(position_to_lonlat(v2) .≈ (lon2, lat2))
+    @test all(position_to_lonlat(v3) .≈ (lon3, lat3))
+
     @test in_spherical_triangle(v1, v1, v2, v3)
     @test in_spherical_triangle(v2, v1, v2, v3)
     @test in_spherical_triangle(v3, v1, v2, v3)

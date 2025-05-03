@@ -6,7 +6,7 @@ export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
 
 export arc_length, arc_midpoint, spherical_triangle_angles, spherical_polygon_area, in_spherical_triangle
-export lonlat_to_position, in_spherical_polygon
+export lonlat_to_position, position_to_lonlat, in_spherical_polygon
 export spherical_polygon_moment, spherical_polygon_centroid
 
 export periodic_to_base_point, isapprox_periodic

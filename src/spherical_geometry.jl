@@ -72,6 +72,12 @@ end
     return Vec(rcoslat * coslon, rcoslat * sinlon, rsinlat)
 end
 
+@inline function position_to_lonlat(p::Vec3D)
+    lon = atan(p.y, p.x)
+    lat = atan(p.z / hypot(p.x, p.y))
+    return (lon, lat)
+end
+
 @inline function in_spherical_triangle(R::T, p::Vec, a::Vec, b::Vec, c::Vec) where {T <: Number}
     ep = eps(T)
     p̂ = p / R

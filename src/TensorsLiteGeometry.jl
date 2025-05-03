@@ -11,6 +11,7 @@ export spherical_polygon_moment, spherical_polygon_centroid
 
 export periodic_to_base_point, isapprox_periodic
 export eastward_vector, northward_vector
+export project_points_to_tangent_plane
 
 const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 

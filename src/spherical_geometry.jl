@@ -195,3 +195,18 @@ Return the northward unit vector to the `position` vector.
     return sinθ*𝐤 - (cosϕ*cosθ)*𝐢 - (sinϕ*cosθ)*𝐣
 end
 
+@inline function project_points_to_tangent_plane(R::Number, base_point::Vec, points::ImmutableVector{N,TV}) where {N, TV<:Vec}
+    bn = base_point / R
+    f = @inline function(p)
+        pn = p / R
+        return p / ( pn ⋅ bn)
+    end
+    return @inline(map(f, points))
+end
+
+"""
+    project_points_to_tangent_plane([sphere_radius::Number], base_point::Vec, points::ImmutableVector{N, <:Vec}) -> projected_points
+
+Project `points` that lies on the same sphere as `base_point` into the plane tangent to the sphere on `base_point`.
+"""
+@inline project_points_to_tangent_plane(base_point::Vec, points::ImmutableVector{N,TV}) where {N, TV<:Vec} =  project_points_to_tangent_plane(norm(base_point), base_point, points)

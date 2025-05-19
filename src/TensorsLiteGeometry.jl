@@ -85,46 +85,6 @@ end
     return (p, p_p_x, p_m_x, p_p_y, p_m_y, p_p_x_p_y, p_m_x_p_y, p_p_x_m_y, p_m_x_m_y)
 end
 
-#This only work if distance between points is much smaller than periods
-#@inline function closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number)
-#    #d = min(xp, yp) / 2
-#    #norm(p2 - p) < d && return p2
-#    #return closest(p, possible_positions_periodic(p2, xp, yp)[2:9])
-#    px = p.x
-#    py = p.y
-#    p2x = p2.x
-#    p2y = p2.y
-#    dx = p2x - px
-#    dy = p2y - py
-#
-#    adx = abs(dx)
-#    ady = abs(dy)
-#
-#    pfx = if (adx < 0.5*xp)
-#        p2x
-#    else
-#        p2xp = p2x + xp
-#        if (abs(p2xp - px) < adx)
-#            p2xp 
-#        else 
-#            p2x - xp
-#        end
-#    end
-#
-#    pfy = if (ady < 0.5*yp)
-#        p2y
-#    else
-#        p2yp = p2y + yp
-#        if (abs(p2yp - py) < ady)
-#            p2yp 
-#        else 
-#            p2y - yp
-#        end
-#    end
-#
-#    return Vec(x=pfx, y=pfy)
-#end
-
 @inline function closest(base_val::Real, val::T, period=T(360)) where {T<:Real}
     vals1 = val - period
     vals2 = val
@@ -147,7 +107,7 @@ end
 
 @inline closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number) = Vec(x = closest(p.x, p2.x, xp), y = closest(p.y, p2.y, yp))
 
-@inline area(a::Vec, b::Vec, c::Vec) = 0.5 * norm((b - a) × (c - b))
+@inline area(a::Vec, b::Vec, c::Vec) = 0.5 * precise_norm((b - a) × (c - b))
 
 for N in 4:12
     @eval function area(vars::Vararg{Vec, $N})
@@ -171,21 +131,25 @@ end
 """
 @inline in_triangle(p::Vec, a::Vec, b::Vec, c::Vec) = in_triangle(p, area(a, b, c), a, b, c)
 
-function area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
-    @inbounds p1 = points[1]
-    @inbounds p2 = points[2]
+@inline function area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
+    L = length(points)
+    @inbounds p1 = sum(points) / L
+    @inbounds p2 = points[1]
     a = zero(nonzero_eltype(T))
 
-    @inbounds for i in Iterators.drop(eachindex(points), 2)
+    @inbounds for i in 2:L
         p3 = points[i]
         a += area(p1, p2, p3)
         p2 = p3
     end
 
+    a += area(p1, p2, @inbounds(points[1]))
+
     return a
 end
 
-function area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+
+@inline function area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
     a = zero(nonzero_eltype(T))
@@ -199,7 +163,7 @@ function area(points::AbstractVector{T}, indices::VecOrTuple) where {T <: Abstra
     return a
 end
 
-function area(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
+@inline function area(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1, points[indices[2]], x_period, y_period)
     a = zero(nonzero_eltype(T))
@@ -220,19 +184,38 @@ Returns the centroid (mass center) position of the triangle formed by points `a`
 """
 @inline centroid(a::Vec, b::Vec, c::Vec) = (a + b + c) / 3
 
+@inline function _mass_centroid(ρa::Number, ρb::Number, ρc::Number, a::Vec, b::Vec, c::Vec)
+    ρm = (ρa + ρb + ρc) / 3
+    return muladd((1 + ((2ρa) / ρm)), a, muladd((1 + ((2ρb) / ρm)), b, (1 + ((2ρc) / ρm)) * c)) / 9
+end
+
+@inline function _mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function}
+    ρa = ρ(a)
+    ρb = ρ(b)
+    ρc = ρ(c)
+    ρm = (ρa + ρb + ρc) / 3
+    cen = centroid(a, b, c)
+
+    c1 = _mass_centroid(ρm, ρa, ρb, cen, a, b)
+    c2 = _mass_centroid(ρm, ρb, ρc, cen, b, c)
+    c3 = _mass_centroid(ρm, ρc, ρa, cen, c, a)
+
+    m1 = (ρm + ρa + ρb) * area(cen, a, b) / 3
+    m2 = (ρm + ρb + ρc) * area(cen, b, c) / 3
+    m3 = (ρm + ρc + ρa) * area(cen, c, a) / 3
+
+    tm = m1 + m2 + m3
+
+    return muladd(m1 / tm, c1, muladd(m2 / tm, c2, (m3 / tm) * c3)), tm
+end
+
 """
     mass_centroid(ρ::Function, a::Vec,b::Vec,c::Vec) -> Vec
 
 Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c` and density funciton `ρ(𝐱)`
 The result is an approximation.
 """
-@inline function mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function}
-    ρa = ρ(a)
-    ρb = ρ(b)
-    ρc = ρ(c)
-    ρm = (ρa + ρb + ρc) / 3
-    return ((1 + ((2ρa) / ρm)) * a + (1 + ((2ρb) / ρm)) * b + (1 + ((2ρc) / ρm)) * c) / 9
-end
+@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = _mass_centroid(ρ, a, b, c)[1]
 
 """
     centroid(points) -> Vec
@@ -269,36 +252,33 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
 """
 @inline function mass_centroid(ρ::F, points::AbstractVector{T}) where {F <: Function, T <: AbstractVec}
 
-    @inbounds p1 = points[1]
-    @inbounds p2 = points[2]
-    @inbounds p3 = points[3]
+    L = length(points)
 
-    rp1 = ρ(p1)
-    rp2 = ρ(p2)
-    rp3 = ρ(p2)
-    rm = (rp1 + rp2 + rp3) / 3
+    @inbounds p1 = sum(points) / L
+    @inbounds p2 = points[1]
+    @inbounds p3 = points[2]
 
-    tmass = rm * area(p1, p2, p3)
-    c = ((1 + ((2rp1) / rm)) * p1 + (1 + ((2rp2) / rm)) * p2 + (1 + ((2rp3) / rm)) * p3) / 9
+    tc, tmass = _mass_centroid(ρ, p1, p2, p3)
 
     p2 = p3
-    rp2 = rp3
 
-    @inbounds for i in Iterators.drop(eachindex(points), 3)
+    @inbounds for i in 3:L
         p3 = points[i]
-        rp3 = ρ(p3)
-        rm = (rp1 + rp2 + rp3) / 3
-        mass = rm * area(p1, p2, p3)
+        c, mass = _mass_centroid(ρ, p1, p2, p3)
         tmass += mass
         w = mass / tmass
-        c = (1 - w) * c + w * (((1 + ((2rp1) / rm)) * p1 + (1 + ((2rp2) / rm)) * p2 + (1 + ((2rp3) / rm)) * p3) / 9)
+        tc = muladd((1 - w), tc, w * c)
         p2 = p3
-        rp2 = rp3
     end
 
-    return c
-end
+    p3 = @inbounds points[1]
+    c, mass = _mass_centroid(ρ, p1, p2, p3)
+    tmass += mass
+    w = mass / tmass
+    tc = muladd((1 - w), tc, w * c)
 
+    return tc
+end
 
 """
     centroid(points, indices) -> Vec
@@ -333,37 +313,7 @@ end
 Returns the centroid (mass center) position of the polygon formed by points `getindex.((points,), indices)` with density funciton `ρ(𝐱)`.
 The result is an approximation due to the assumption that `ρ` is linear inside each triangle that forms the polygon.
 """
-@inline function mass_centroid(ρ::F, points::AbstractVector{T}, indices::VecOrTuple) where {F <: Function, T <: AbstractVec}
-
-    @inbounds p1 = points[indices[1]]
-    @inbounds p2 = points[indices[2]]
-    @inbounds p3 = points[indices[3]]
-
-    rp1 = ρ(p1)
-    rp2 = ρ(p2)
-    rp3 = ρ(p2)
-    tr = rp1 + rp2 + rp3
-
-    tmass = (tr / 3) * area(p1, p2, p3)
-    c = (rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3
-
-    p2 = p3
-    rp2 = rp3
-
-    @inbounds for i in Iterators.drop(indices, 3)
-        p3 = points[i]
-        rp3 = ρ(p3)
-        tr = rp1 + rp2 + rp3
-        mass = (tr / 3) * area(p1, p2, p3)
-        tmass += mass
-        w = mass / tmass
-        c = (1 - w) * c + w * ((rp1 / tr) * p1 + (rp2 / tr) * p2 + (rp3 / tr) * p3)
-        p2 = p3
-        rp2 = rp3
-    end
-
-    return c
-end
+@inline mass_centroid(ρ::F, points::AbstractVector{T}, indices::VecOrTuple) where {F <: Function, T <: AbstractVec} = mass_centroid(ρ, @view(points[indices]))
 
 @inline function centroid(points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
 

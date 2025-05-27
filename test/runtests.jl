@@ -1,4 +1,5 @@
 using TensorsLite, TensorsLiteGeometry, ImmutableVectors
+import TensorsLiteGeometry: integrate
 using Test
 
 displacement = (1.3𝐢 - 1.3𝐣)
@@ -58,6 +59,13 @@ end
     @test mass_centroid(x -> true, a, b, c) ≈ ((a + b + c) / 3)
     @test mass_centroid(x -> true, [a, b, c, d]) ≈ ((a + b + c + d) / 4)
     @test mass_centroid(x -> true, [a, b, c, d], 1:4) ≈ ((a + b + c + d) / 4)
+end
+
+@testset "Integration" begin
+    @test integrate(x -> (x⋅x)*x, a, b, c) / integrate(x -> (x⋅x), a, b, c) ≈ mass_centroid(x -> x⋅x, a, b, c)
+    let f = x -> (3.0x[1]^2 + 2.0x[2]^2 - x[1] + x[2])
+        @test integrate(x -> f(x)*x, [a, b, c, d]) / integrate(f, [a, b, c, d]) ≈ mass_centroid(f, [a, b, c, d])
+    end
 end
 
 @testset "in_triangle function" begin

@@ -4,6 +4,7 @@ using TensorsLite, ImmutableVectors, LinearAlgebra
 export circumcenter, closest, possible_positions_periodic, centroid, mass_centroid
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
+public integrate, angle
 
 export arc_length, arc_midpoint, spherical_triangle_angles, spherical_polygon_area, in_spherical_triangle
 export lonlat_to_position, position_to_lonlat, in_spherical_polygon
@@ -177,6 +178,92 @@ end
     return a
 end
 
+# 4th order approximation to integral of f over the triangle given by the x1, x2, x3 points
+"""
+    integrate(f::Function, a::Vec,b::Vec,c::Vec) -> r::return_type(f)
+
+Returns the integral of `f` over the triangle formed by points `a`,`b`,`c`.
+Uses a fourth order quadrature rule.
+"""
+@inline function integrate(f::F, x1::Vec, x2::Vec, x3::Vec) where F<:Function
+    c = centroid(x1, x2, x3)
+    x12 = (x1 + x2) / 2
+    x23 = (x2 + x3) / 2
+    x31 = (x3 + x1) / 2
+
+    t1 = f(c)
+    t2 = f(x1) + f(x2) + f(x3)
+    t3 = f(x12) + f(x23) + f(x31)
+
+    return area(x1,x2,x3)*muladd(27/60, t1, muladd(3/60, t2, (8/60)*t3))
+end
+
+"""
+    integrate(f::Function, points) -> r::return_type(f)
+
+Returns the integral of `f` over the polygon formed by points `points`.
+This function subdivides the polygon into `length(points)` triangles and uses a fourth order quadrature rule on each triangle.
+"""
+@inline function integrate(ρ::F, points::AbstractVector{T}) where {F <: Function, T <: AbstractVec}
+
+    L = length(points)
+
+    @inbounds p1 = sum(points) / L
+    @inbounds p2 = points[1]
+    @inbounds p3 = points[2]
+
+    r = integrate(ρ, p1, p2, p3)
+
+    p2 = p3
+
+    @inbounds for i in 3:L
+        p3 = points[i]
+        r += integrate(ρ, p1, p2, p3)
+        p2 = p3
+    end
+
+    p3 = @inbounds points[1]
+    r += integrate(ρ, p1, p2, p3)
+
+    return r
+end
+
+# 4th order approximation
+@inline function triangle_mass_and_centroid(ρ::F, x1::Vec, x2::Vec, x3::Vec) where F<:Function
+    c = centroid(x1, x2, x3)
+
+    ρc = ρ(c)
+
+    t1m = ρc
+    t1c = ρc*c
+
+    ρx1 = ρ(x1)
+    ρx2 = ρ(x2)
+    ρx3 = ρ(x3)
+
+    t2m = ρx1 + ρx2 + ρx3
+    t2c = muladd(ρx1,x1, muladd(ρx2, x2, ρx3*x3))
+
+    x12 = (x1 + x2) / 2
+    x23 = (x2 + x3) / 2
+    x31 = (x3 + x1) / 2
+
+    ρx12 = ρ(x12)
+    ρx23 = ρ(x23)
+    ρx31 = ρ(x31)
+
+    t3m = ρx12 + ρx23 + ρx31
+    t3c = muladd(ρx12,x12, muladd(ρx23, x23, ρx31*x31))
+
+    A = area(x1, x2, x3)
+ 
+    mass_overA = muladd(27/60, t1m, muladd(3/60, t2m, (8/60)*t3m))
+    mass = A*mass_overA
+    mass_center = inv(mass_overA)*muladd(27/60, t1c, muladd(3/60, t2c, (8/60)*t3c))
+    return mass, mass_center
+end
+
+
 """
     centroid(a::Vec,b::Vec,c::Vec) -> Vec
 
@@ -184,38 +271,14 @@ Returns the centroid (mass center) position of the triangle formed by points `a`
 """
 @inline centroid(a::Vec, b::Vec, c::Vec) = (a + b + c) / 3
 
-@inline function _mass_centroid(ρa::Number, ρb::Number, ρc::Number, a::Vec, b::Vec, c::Vec)
-    ρm = (ρa + ρb + ρc) / 3
-    return muladd((1 + ((2ρa) / ρm)), a, muladd((1 + ((2ρb) / ρm)), b, (1 + ((2ρc) / ρm)) * c)) / 9
-end
-
-@inline function _mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function}
-    ρa = ρ(a)
-    ρb = ρ(b)
-    ρc = ρ(c)
-    ρm = (ρa + ρb + ρc) / 3
-    cen = centroid(a, b, c)
-
-    c1 = _mass_centroid(ρm, ρa, ρb, cen, a, b)
-    c2 = _mass_centroid(ρm, ρb, ρc, cen, b, c)
-    c3 = _mass_centroid(ρm, ρc, ρa, cen, c, a)
-
-    m1 = (ρm + ρa + ρb) * area(cen, a, b) / 3
-    m2 = (ρm + ρb + ρc) * area(cen, b, c) / 3
-    m3 = (ρm + ρc + ρa) * area(cen, c, a) / 3
-
-    tm = m1 + m2 + m3
-
-    return muladd(m1 / tm, c1, muladd(m2 / tm, c2, (m3 / tm) * c3)), tm
-end
-
 """
     mass_centroid(ρ::Function, a::Vec,b::Vec,c::Vec) -> Vec
 
 Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c` and density funciton `ρ(𝐱)`
 The result is an approximation.
 """
-@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = _mass_centroid(ρ, a, b, c)[1]
+@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = triangle_mass_and_centroid(ρ, a, b, c)[2]
+#@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = _mass_centroid(ρ, a, b, c)[1]
 
 """
     centroid(points) -> Vec
@@ -258,13 +321,13 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
     @inbounds p2 = points[1]
     @inbounds p3 = points[2]
 
-    tc, tmass = _mass_centroid(ρ, p1, p2, p3)
+    tmass, tc = triangle_mass_and_centroid(ρ, p1, p2, p3)
 
     p2 = p3
 
     @inbounds for i in 3:L
         p3 = points[i]
-        c, mass = _mass_centroid(ρ, p1, p2, p3)
+        mass, c = triangle_mass_and_centroid(ρ, p1, p2, p3)
         tmass += mass
         w = mass / tmass
         tc = muladd((1 - w), tc, w * c)
@@ -272,7 +335,7 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
     end
 
     p3 = @inbounds points[1]
-    c, mass = _mass_centroid(ρ, p1, p2, p3)
+    mass, c = triangle_mass_and_centroid(ρ, p1, p2, p3)
     tmass += mass
     w = mass / tmass
     tc = muladd((1 - w), tc, w * c)

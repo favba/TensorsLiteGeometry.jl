@@ -1,4 +1,4 @@
-using TensorsLite, TensorsLiteGeometry, ImmutableVectors
+using TensorsLite, TensorsLiteGeometry, ImmutableVectors, LinearAlgebra
 import TensorsLiteGeometry: integrate
 using Test
 

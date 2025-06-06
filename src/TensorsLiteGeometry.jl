@@ -1,5 +1,7 @@
 module TensorsLiteGeometry
-using TensorsLite, ImmutableVectors, LinearAlgebra
+
+using LinearAlgebra
+using TensorsLite, ImmutableVectors
 
 export circumcenter, closest, possible_positions_periodic, centroid, mass_centroid
 export area, is_obtuse, in_triangle, in_polygon

@@ -172,7 +172,7 @@ end
 
 Return the eastward unit vector to the `position` vector.
 """
-@inline function eastward_vector(p::Vec3D)
+@inline function eastward_vector(p::Vec)
     ϕ = atan(p.y, p.x)
     return cos(ϕ) * 𝐣 - sin(ϕ) * 𝐢
 end
@@ -182,7 +182,7 @@ end
 
 Return the northward unit vector to the `position` vector.
 """
-@inline function northward_vector(p::Vec3D)
+@inline function northward_vector(p::Vec)
     x = p.x
     y = p.y
     z = p.z
@@ -194,8 +194,8 @@ Return the northward unit vector to the `position` vector.
     cosθ = cos(θ)
     return sinθ*𝐤 - (cosϕ*cosθ)*𝐢 - (sinϕ*cosθ)*𝐣
 end
-
-@inline function project_points_to_tangent_plane(R::Number, base_point::Vec, points::ImmutableVector{N,TV}) where {N, TV<:Vec}
+                                                                            #points::ImmutableVector{N,TV}) where {N,TV}
+@inline function project_points_to_tangent_plane(R::Number, base_point::Vec, points::P) where {P}
     bn = base_point / R
     f = @inline function(p)
         pn = p / R
@@ -205,8 +205,8 @@ end
 end
 
 """
-    project_points_to_tangent_plane([sphere_radius::Number], base_point::Vec, points::ImmutableVector{N, <:Vec}) -> projected_points
+    project_points_to_tangent_plane([sphere_radius::Number], base_point::Vec, points::SomeCollection{<:Vec}) -> projected_points
 
 Project `points` that lies on the same sphere as `base_point` into the plane tangent to the sphere on `base_point`.
 """
-@inline project_points_to_tangent_plane(base_point::Vec, points::ImmutableVector{N,TV}) where {N, TV<:Vec} =  project_points_to_tangent_plane(norm(base_point), base_point, points)
+@inline project_points_to_tangent_plane(base_point::Vec, points::P) where {P} =  project_points_to_tangent_plane(norm(base_point), base_point, points)

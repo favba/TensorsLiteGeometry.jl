@@ -1,7 +1,7 @@
 module TensorsLiteGeometry
 
 using LinearAlgebra
-using TensorsLite, ImmutableVectors
+using TensorsLite, SmallCollections
 
 export circumcenter, closest, possible_positions_periodic, centroid, mass_centroid
 export area, is_obtuse, in_triangle, in_polygon
@@ -507,11 +507,11 @@ function is_in_circle(c::Vec, r2::Number, point::Vec)
     return cp ⋅ cp <= r2
 end
 
-function polygon_circle_intersection_area(center, r2, vertices_positions::ImmutableVector{N}, in_circle::ImmutableVector{N, Bool}) where {N}
+function polygon_circle_intersection_area(center, r2, vertices_positions::SmallVector{N}, in_circle::SmallVector{N, Bool}) where {N}
     l_in_c = in_circle
     lv = vertices_positions
 
-    # Rearange terms to get all (and only) terms inside the circle placed at the beginning of the ImmutableVector
+    # Rearange terms to get all (and only) terms inside the circle placed at the beginning of the SmallVector
     while !is_rev_sorted(l_in_c)
         l_in_c = circshift(l_in_c, 1)
         lv = circshift(lv, 1)
@@ -522,7 +522,7 @@ function polygon_circle_intersection_area(center, r2, vertices_positions::Immuta
     first_intersection = @inbounds circle_edge_intersection(lv[nv_in_circle], lv[nv_in_circle + 1], center, r2)
     second_intersection = @inbounds circle_edge_intersection(lv[end], lv[1], center, r2)
 
-    new_polygon = @inbounds push(ImmutableVector{N + 1}(lv[1:nv_in_circle]), first_intersection, second_intersection)
+    new_polygon = @inbounds push(SmallVector{N + 1}(lv[1:nv_in_circle]), first_intersection, second_intersection)
 
     area1 = area(new_polygon)
 
@@ -537,7 +537,7 @@ function polygon_circle_intersection_area(center, r2, vertices_positions::Immuta
     return area1 + area2
 end
 
-function polygon_circle_intersection_area(center, r2, vertices_positions::ImmutableVector{N}) where {N}
+function polygon_circle_intersection_area(center, r2, vertices_positions::SmallVector{N}) where {N}
     in_circle = map(v -> (is_in_circle(center, r2, v)), vertices_positions)
     return polygon_circle_intersection_area(center, r2, vertices_positions, in_circle)
 end

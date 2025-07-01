@@ -1,4 +1,4 @@
-using TensorsLite, TensorsLiteGeometry, ImmutableVectors, LinearAlgebra
+using TensorsLite, TensorsLiteGeometry, SmallCollections, LinearAlgebra
 import TensorsLiteGeometry: integrate
 using Test
 
@@ -132,7 +132,7 @@ end
     v3 = 0.0𝐢 + 0.0𝐣 + disp
     v4 = 4.0𝐢 + 0.0𝐣 + disp
 
-    polygon = ImmutableVector{7}((v1, v2, v3, v4))
+    polygon = SmallVector{7}((v1, v2, v3, v4))
 
     @test polygon_circle_intersection_area(c, r2, polygon) ≈ π * r2 / 4
 end

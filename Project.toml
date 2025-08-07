@@ -9,7 +9,7 @@ SmallCollections = "2b935e18-93d6-40ac-ae34-fe54c09f00e1"
 TensorsLite = "1a1b94bd-d244-45e0-965a-8acfeb92b70f"
 
 [compat]
-SmallCollections = "0.4.1"
+SmallCollections = "0.4.1, 0.5"
 julia = "1.10"
 
 [extras]

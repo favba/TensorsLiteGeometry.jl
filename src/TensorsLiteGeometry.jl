@@ -108,7 +108,7 @@ end
     return result
 end
 
-@inline closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number) = Vec(x = closest(p.x, p2.x, xp), y = closest(p.y, p2.y, yp))
+@inline closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number) = closest(p.x, p2.x, xp)*𝐢 + closest(p.y, p2.y, yp)*𝐣
 
 @inline area(a::Vec, b::Vec, c::Vec) = 0.5 * precise_norm((b - a) × (c - b))
 

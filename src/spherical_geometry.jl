@@ -1,10 +1,10 @@
-@inline arc_length(R::Number, a::Vec, b::Vec) = R * angle(a, b)
-@inline arc_length(a::Vec, b::Vec) = arc_length(norm(a), a, b)
+@inline arc_length(R::Number, a::AbstractVec, b::AbstractVec) = R * angle(a, b)
+@inline arc_length(a::AbstractVec, b::AbstractVec) = arc_length(norm(a), a, b)
 
-@inline arc_midpoint(R::Number, a::Vec, b::Vec) = R * normalize((a + b) / 2)
-@inline arc_midpoint(a::Vec, b::Vec) = arc_midpoint(norm(a), a, b)
+@inline arc_midpoint(R::Number, a::AbstractVec, b::AbstractVec) = R * normalize((a + b) / 2)
+@inline arc_midpoint(a::AbstractVec, b::AbstractVec) = arc_midpoint(norm(a), a, b)
 
-@inline function spherical_triangle_angles(a::Vec, b::Vec, c::Vec)
+@inline function spherical_triangle_angles(a::AbstractVec, b::AbstractVec, c::AbstractVec)
 
     n_ab = a × b
     n_ac = a × c
@@ -21,16 +21,16 @@
 end
 
 
-@inline spherical_polygon_area(R::Number, a::Vec, b::Vec, c::Vec) = (R * R) * (sum(spherical_triangle_angles(a, b, c)) - π)
+@inline spherical_polygon_area(R::Number, a::AbstractVec, b::AbstractVec, c::AbstractVec) = (R * R) * (sum(spherical_triangle_angles(a, b, c)) - π)
 
 for N in 4:12
-    @eval function spherical_polygon_area(R::Number, vars::Vararg{Vec, $N})
+    @eval function spherical_polygon_area(R::Number, vars::Vararg{AbstractVec, $N})
         $(Expr(:meta, :inline))
         spherical_polygon_area(R, ntuple(i -> vars[i], $(Val(N - 1)))...) + spherical_polygon_area(R, vars[1], vars[$(N - 1)], vars[$N])
     end
 end
 
-@inline spherical_polygon_area(v::Vararg{Vec, N}) where {N} = spherical_polygon_area(norm(v[1]), v...)
+@inline spherical_polygon_area(v::Vararg{AbstractVec, N}) where {N} = spherical_polygon_area(norm(v[1]), v...)
 
 @inline function spherical_polygon_area(R::Number, points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
     @inbounds p1 = points[1]
@@ -78,7 +78,7 @@ end
     return (lon, lat)
 end
 
-@inline function in_spherical_triangle(R::T, p::Vec, a::Vec, b::Vec, c::Vec) where {T <: Number}
+@inline function in_spherical_triangle(R::T, p::AbstractVec, a::AbstractVec, b::AbstractVec, c::AbstractVec) where {T <: Number}
     ep = eps(T)
     p̂ = p / R
     â = a / R
@@ -91,9 +91,9 @@ end
     end
 end
 
-@inline in_spherical_triangle(p::Vec, a::Vec, b::Vec, c::Vec) = in_spherical_triangle(norm(a), p, a, b, c)
+@inline in_spherical_triangle(p::AbstractVec, a::AbstractVec, b::AbstractVec, c::AbstractVec) = in_spherical_triangle(norm(a), p, a, b, c)
 
-function in_spherical_polygon(R::Number, p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+function in_spherical_polygon(R::Number, p::AbstractVec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
 
@@ -109,13 +109,13 @@ function in_spherical_polygon(R::Number, p::Vec, points::AbstractVector{T}, indi
 end
 
 """
-    in_spherical_polygon(point::Vec, vertices::AbstractVector{<:Vec}, indices) -> Bool
+    in_spherical_polygon(point::AbstractVec, vertices::AbstractVector{<:AbstractVec}, indices) -> Bool
 
 Whether `point` is inside a given spherical polygon with vertices given by `getindex.((vertices,),indices)`
 """
-@inline in_spherical_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = in_spherical_polygon(norm(points[indices[1]]), p, points, indices)
+@inline in_spherical_polygon(p::AbstractVec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = in_spherical_polygon(norm(points[indices[1]]), p, points, indices)
 
-@inline function spherical_polygon_moment(R::Number, a::Vec, b::Vec, c::Vec)
+@inline function spherical_polygon_moment(R::Number, a::AbstractVec, b::AbstractVec, c::AbstractVec)
     ab = normalize(a × b) * angle(a, b)
     bc = normalize(b × c) * angle(b, c)
     ca = normalize(c × a) * angle(c, a)
@@ -158,8 +158,8 @@ end
     return R * a / 2
 end
 
-@inline spherical_polygon_centroid(R::Number, a::Vec, b::Vec, c::Vec) = R * normalize(spherical_polygon_moment(R, a, b, c))
-@inline spherical_polygon_centroid(a::Vec, b::Vec, c::Vec) = spherical_polygon_centroid(norm(a), b, c)
+@inline spherical_polygon_centroid(R::Number, a::AbstractVec, b::AbstractVec, c::AbstractVec) = R * normalize(spherical_polygon_moment(R, a, b, c))
+@inline spherical_polygon_centroid(a::AbstractVec, b::AbstractVec, c::AbstractVec) = spherical_polygon_centroid(norm(a), b, c)
 
 @inline spherical_polygon_centroid(R::Number, points::VecOrTuple{T}) where {T <: AbstractVec} = R * normalize(spherical_polygon_moment(R, points))
 @inline spherical_polygon_centroid(points::VecOrTuple{T}) where {T <: AbstractVec} = spherical_polygon_centroid(norm(points[1]), points)
@@ -168,21 +168,21 @@ end
 @inline spherical_polygon_centroid(points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec} = spherical_polygon_centroid(norm(points[indices[1]]), points, indices)
 
 """
-    eastward_vector(position::Vec) -> east_unit_vector::Vec2D
+    eastward_vector(position::AbstractVec) -> east_unit_vector::Vec2D
 
 Return the eastward unit vector to the `position` vector.
 """
-@inline function eastward_vector(p::Vec)
+@inline function eastward_vector(p::AbstractVec)
     ϕ = atan(p.y, p.x)
     return cos(ϕ) * 𝐣 - sin(ϕ) * 𝐢
 end
 
 """
-    northward_vector(position::Vec) -> northward_unit_vector::Vec3D
+    northward_vector(position::AbstractVec) -> northward_unit_vector::Vec3D
 
 Return the northward unit vector to the `position` vector.
 """
-@inline function northward_vector(p::Vec)
+@inline function northward_vector(p::AbstractVec)
     x = p.x
     y = p.y
     z = p.z
@@ -195,7 +195,7 @@ Return the northward unit vector to the `position` vector.
     return sinθ*𝐤 - (cosϕ*cosθ)*𝐢 - (sinϕ*cosθ)*𝐣
 end
                                                                             #points::ImmutableVector{N,TV}) where {N,TV}
-@inline function project_points_to_tangent_plane(R::Number, base_point::Vec, points::P) where {P}
+@inline function project_points_to_tangent_plane(R::Number, base_point::AbstractVec, points::P) where {P}
     bn = base_point / R
     f = @inline function(p)
         pn = p / R
@@ -205,8 +205,8 @@ end
 end
 
 """
-    project_points_to_tangent_plane([sphere_radius::Number], base_point::Vec, points::SomeCollection{<:Vec}) -> projected_points
+    project_points_to_tangent_plane([sphere_radius::Number], base_point::AbstractVec, points::SomeCollection{<:AbstractVec}) -> projected_points
 
 Project `points` that lies on the same sphere as `base_point` into the plane tangent to the sphere on `base_point`.
 """
-@inline project_points_to_tangent_plane(base_point::Vec, points::P) where {P} =  project_points_to_tangent_plane(norm(base_point), base_point, points)
+@inline project_points_to_tangent_plane(base_point::AbstractVec, points::P) where {P} =  project_points_to_tangent_plane(norm(base_point), base_point, points)

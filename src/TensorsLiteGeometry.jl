@@ -35,7 +35,7 @@ const VecOrTuple{T} = Union{<:(NTuple{N, T} where {N}), <:AbstractVector{T}}
 
 Returns the circumcenter position of the triangle formed by points `a`,`b`,`c`
 """
-@inline function circumcenter(a::Vec, b::Vec, c::Vec)
+@inline function circumcenter(a::AbstractVec, b::AbstractVec, c::AbstractVec)
 
     ab = b - a
     ac = c - a
@@ -51,7 +51,7 @@ Returns the circumcenter position of the triangle formed by points `a`,`b`,`c`
     return (muladd(sin2A, a, muladd(sin2B, b, sin2C * c))) / (sin2A + sin2B + sin2C)
 end
 
-@generated function closest(p::Vec, points::Tuple{Vararg{T, N}}) where {T <: Vec, N}
+@generated function closest(p::AbstractVec, points::Tuple{Vararg{T, N}}) where {T <: AbstractVec, N}
     quote
         $(Expr(:meta, :inline))
         p_i = points[1]
@@ -71,9 +71,9 @@ end
     end
 end
 
-@inline closest(points::Tuple, p::Vec) = closest(p, points)
+@inline closest(points::Tuple, p::AbstractVec) = closest(p, points)
 
-@inline function possible_positions_periodic(p::Vec, xp::Number, yp::Number)
+@inline function possible_positions_periodic(p::AbstractVec, xp::Number, yp::Number)
     xpi = xp * 𝐢
     ypj = yp * 𝐣
     p_p_x = p + xpi
@@ -110,16 +110,16 @@ end
 
 @inline closest(p::Vec2Dxy, p2::Vec2Dxy, xp::Number, yp::Number) = closest(p.x, p2.x, xp)*𝐢 + closest(p.y, p2.y, yp)*𝐣
 
-@inline area(a::Vec, b::Vec, c::Vec) = 0.5 * precise_norm((b - a) × (c - b))
+@inline area(a::AbstractVec, b::AbstractVec, c::AbstractVec) = 0.5 * precise_norm((b - a) × (c - b))
 
 for N in 4:12
-    @eval function area(vars::Vararg{Vec, $N})
+    @eval function area(vars::Vararg{AbstractVec, $N})
         $(Expr(:meta, :inline))
         area(ntuple(i -> vars[i], $(Val(N - 1)))...) + area(vars[1], vars[$(N - 1)], vars[$N])
     end
 end
 
-@inline function in_triangle(p::Vec, at::Number, a::Vec, b::Vec, c::Vec)
+@inline function in_triangle(p::AbstractVec, at::Number, a::AbstractVec, b::AbstractVec, c::AbstractVec)
 
     aa = area(p, b, c)
     ab = area(p, c, a)
@@ -132,7 +132,7 @@ end
 
 """ Checks if point `p` is inside the triangle given by the vertices `a`,`b`,`c`
 """
-@inline in_triangle(p::Vec, a::Vec, b::Vec, c::Vec) = in_triangle(p, area(a, b, c), a, b, c)
+@inline in_triangle(p::AbstractVec, a::AbstractVec, b::AbstractVec, c::AbstractVec) = in_triangle(p, area(a, b, c), a, b, c)
 
 @inline function area(points::Union{<:AbstractVector{T}, NTuple{N, T}}) where {T <: AbstractVec, N}
     L = length(points)
@@ -182,12 +182,12 @@ end
 
 # 4th order approximation to integral of f over the triangle given by the x1, x2, x3 points
 """
-    integrate(f::Function, a::Vec,b::Vec,c::Vec) -> r::return_type(f)
+    integrate(f::Function, a::AbstractVec,b::AbstractVec,c::AbstractVec) -> r::return_type(f)
 
 Returns the integral of `f` over the triangle formed by points `a`,`b`,`c`.
 Uses a fourth order quadrature rule.
 """
-@inline function integrate(f::F, x1::Vec, x2::Vec, x3::Vec) where F<:Function
+@inline function integrate(f::F, x1::AbstractVec, x2::AbstractVec, x3::AbstractVec) where F<:Function
     c = centroid(x1, x2, x3)
     x12 = (x1 + x2) / 2
     x23 = (x2 + x3) / 2
@@ -231,7 +231,7 @@ This function subdivides the polygon into `length(points)` triangles and uses a 
 end
 
 # 4th order approximation
-@inline function triangle_mass_and_centroid(ρ::F, x1::Vec, x2::Vec, x3::Vec) where F<:Function
+@inline function triangle_mass_and_centroid(ρ::F, x1::AbstractVec, x2::AbstractVec, x3::AbstractVec) where F<:Function
     c = centroid(x1, x2, x3)
 
     ρc = ρ(c)
@@ -267,23 +267,23 @@ end
 
 
 """
-    centroid(a::Vec,b::Vec,c::Vec) -> Vec
+    centroid(a::AbstractVec,b::AbstractVec,c::AbstractVec) -> AbstractVec
 
 Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c`
 """
-@inline centroid(a::Vec, b::Vec, c::Vec) = (a + b + c) / 3
+@inline centroid(a::AbstractVec, b::AbstractVec, c::AbstractVec) = (a + b + c) / 3
 
 """
-    mass_centroid(ρ::Function, a::Vec,b::Vec,c::Vec) -> Vec
+    mass_centroid(ρ::Function, a::AbstractVec,b::AbstractVec,c::AbstractVec) -> AbstractVec
 
 Returns the centroid (mass center) position of the triangle formed by points `a`,`b`,`c` and density funciton `ρ(𝐱)`
 The result is an approximation.
 """
-@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = triangle_mass_and_centroid(ρ, a, b, c)[2]
-#@inline mass_centroid(ρ::F, a::Vec, b::Vec, c::Vec) where {F <: Function} = _mass_centroid(ρ, a, b, c)[1]
+@inline mass_centroid(ρ::F, a::AbstractVec, b::AbstractVec, c::AbstractVec) where {F <: Function} = triangle_mass_and_centroid(ρ, a, b, c)[2]
+#@inline mass_centroid(ρ::F, a::AbstractVec, b::AbstractVec, c::AbstractVec) where {F <: Function} = _mass_centroid(ρ, a, b, c)[1]
 
 """
-    centroid(points) -> Vec
+    centroid(points) -> AbstractVec
 
 Returns the centroid (mass center) position of the polygon formed by `points`.
 """
@@ -310,7 +310,7 @@ Returns the centroid (mass center) position of the polygon formed by `points`.
 end
 
 """
-    mass_centroid(ρ, points) -> Vec
+    mass_centroid(ρ, points) -> AbstractVec
 
 Returns the centroid (mass center) position of the polygon formed by `points` with density function `ρ(𝐱)`.
 The result is an approximation due to the assumption that `ρ` is linear inside each triangle that forms the polygon.
@@ -346,7 +346,7 @@ The result is an approximation due to the assumption that `ρ` is linear inside 
 end
 
 """
-    centroid(points, indices) -> Vec
+    centroid(points, indices) -> AbstractVec
 
 Returns the centroid (mass center) position of the polygon formed by points `getindex.((points,), indices)`
 """
@@ -373,7 +373,7 @@ Returns the centroid (mass center) position of the polygon formed by points `get
 end
 
 """
-    mass_centroid(ρ, points, indices) -> Vec
+    mass_centroid(ρ, points, indices) -> AbstractVec
 
 Returns the centroid (mass center) position of the polygon formed by points `getindex.((points,), indices)` with density funciton `ρ(𝐱)`.
 The result is an approximation due to the assumption that `ρ` is linear inside each triangle that forms the polygon.
@@ -404,11 +404,11 @@ end
 
 
 """
-    in_polygon(point::Vec, vertices::AbstractVector{<:Vec}, indices) -> Bool
+    in_polygon(point::AbstractVec, vertices::AbstractVector{<:AbstractVec}, indices) -> Bool
 
 Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices)`
 """
-function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
+function in_polygon(p::AbstractVec, points::AbstractVector{T}, indices::VecOrTuple) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = points[indices[2]]
 
@@ -424,11 +424,11 @@ function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple) wher
 end
 
 """
-    in_polygon_periodic(point::Vec, vertices::AbstractVector{<:Vec}, indices,x_period::Number,y_period::Number) -> Bool
+    in_polygon_periodic(point::AbstractVec, vertices::AbstractVector{<:AbstractVec}, indices,x_period::Number,y_period::Number) -> Bool
 
 Whether `point` is inside a polygon with vertices given by `getindex.((vertices,),indices) adjusted to the fact that some vertices positions might overflow the periodic domain.`
 """
-function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
+function in_polygon(p::AbstractVec, points::AbstractVector{T}, indices::VecOrTuple, x_period::Number, y_period::Number) where {T <: AbstractVec}
     @inbounds p1 = points[indices[1]]
     @inbounds p2 = closest(p1, points[indices[2]], x_period, y_period)
 
@@ -444,11 +444,11 @@ function in_polygon(p::Vec, points::AbstractVector{T}, indices::VecOrTuple, x_pe
 end
 
 """
-    is_obtuse(a::Vec,b::Vec,c::Vec) -> Bool
+    is_obtuse(a::AbstractVec,b::AbstractVec,c::AbstractVec) -> Bool
 
 Whether the triangle formed by points `a`,`b`,`c` is obtuse
 """
-function is_obtuse(a::Vec, b::Vec, c::Vec)
+function is_obtuse(a::AbstractVec, b::AbstractVec, c::AbstractVec)
     ab = b - a
     ac = c - a
 
@@ -502,7 +502,7 @@ function is_rev_sorted(in_circle::AbstractVector)
     return r
 end
 
-function is_in_circle(c::Vec, r2::Number, point::Vec)
+function is_in_circle(c::AbstractVec, r2::Number, point::AbstractVec)
     cp = point - c
     return cp ⋅ cp <= r2
 end

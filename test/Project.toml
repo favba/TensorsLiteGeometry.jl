@@ -1,0 +1,9 @@
+[deps]
+SmallCollections = "2b935e18-93d6-40ac-ae34-fe54c09f00e1"
+TensorsLite = "1a1b94bd-d244-45e0-965a-8acfeb92b70f"
+TensorsLiteGeometry = "f9cc0174-84f8-4243-a119-6cf6c33db921"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[sources]
+TensorsLite = {url = "https://github.com/favba/TensorsLite.jl"}
+TensorsLiteGeometry = {path = "../"}

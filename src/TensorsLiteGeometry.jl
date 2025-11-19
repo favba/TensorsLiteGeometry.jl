@@ -6,7 +6,10 @@ using TensorsLite, SmallCollections
 export circumcenter, closest, possible_positions_periodic, centroid, mass_centroid
 export area, is_obtuse, in_triangle, in_polygon
 export circle_edge_intersection, polygon_circle_intersection_area
+
+@static if VERSION >= v"1.11"
 public integrate, angle
+end
 
 export arc_length, arc_midpoint, spherical_triangle_angles, spherical_polygon_area, in_spherical_triangle
 export lonlat_to_position, position_to_lonlat, in_spherical_polygon

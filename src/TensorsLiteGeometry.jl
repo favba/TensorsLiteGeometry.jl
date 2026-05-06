@@ -552,16 +552,16 @@ Given a point `p` returns the equivalent point that lies in `[0, lx) × [0, ly)`
 """
 function periodic_to_base_point(p::Vec2Dxy, lx::Number, ly::Number)
     r = p
-    while r.x >= lx
+    while r.x > lx
         r -= lx*𝐢
     end
-    while r.x < 0.0
+    while r.x <= 0.0
         r += lx*𝐢
     end
-    while r.y >= ly
+    while r.y > ly
         r -= ly*𝐣
     end
-    while r.y < 0.0
+    while r.y <= 0.0
         r += ly*𝐣
     end
     return r
